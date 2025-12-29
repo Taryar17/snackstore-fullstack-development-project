@@ -4,6 +4,8 @@ import RootLayout from "./pages/RootLayout";
 import HomePage from "./pages/Home";
 import AboutPage from "./pages/About";
 import ErrorPage from "./pages/Error";
+import LoginPage from "./pages/auth/Login";
+import RegisterPage from "./pages/auth/Register";
 
 const ProductRootLayout = lazy(
   () => import("./pages/products/ProductRootLayout")
@@ -50,5 +52,21 @@ export const router = createBrowserRouter([
         ],
       },
     ],
+  },
+  {
+    path: "login",
+    element: (
+      <Suspense fallback={<SuspenseFallback />}>
+        <LoginPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "register",
+    element: (
+      <Suspense fallback={<SuspenseFallback />}>
+        <RegisterPage />
+      </Suspense>
+    ),
   },
 ]);
