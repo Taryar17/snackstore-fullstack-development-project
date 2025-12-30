@@ -5,8 +5,9 @@ import CarouselPlugin from "../components/products/CarouselCard";
 import { products } from "../data/product";
 import PreviewProduct from "../components/products/PreviewProduct";
 import ProductCard from "../components/products/ProductCard";
+import { FieldSeparator } from "../components/ui/field";
 
-const sampleProducts = products.slice(0, 4);
+const sampleProducts = products.slice(0, 6);
 
 function Home() {
   return (
@@ -55,12 +56,14 @@ function Home() {
           Best Sellers
         </h1>
         <CarouselPlugin products={products} />
+        <FieldSeparator />
         <PreviewProduct
           title="Featured Products"
           href="/products"
           sideText="View All Products"
         />
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 px-4 md:px-0">
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-6 px-4 mb-4 md:px-0">
           {sampleProducts.map((product) => (
             <ProductCard product={product} key={product.id} />
           ))}

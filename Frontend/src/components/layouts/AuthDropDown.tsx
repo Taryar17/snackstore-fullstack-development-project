@@ -19,7 +19,7 @@ import {
 } from "../../components/ui/avatar";
 
 interface UserProps {
-  user: User;
+  user: User[];
 }
 function AuthDropDown({ user }: UserProps) {
   if (!user) {
@@ -30,8 +30,8 @@ function AuthDropDown({ user }: UserProps) {
     );
   }
 
-  const initialName = `${user.firstName.charAt(0) ?? ""} ${
-    user.lastName.charAt(0) ?? ""
+  const initialName = `${user[1].firstName.charAt(0) ?? ""} ${
+    user[1].lastName.charAt(0) ?? ""
   }`;
   return (
     <>
@@ -39,7 +39,7 @@ function AuthDropDown({ user }: UserProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="secondary" className="size-8 rounded-full">
             <Avatar>
-              <AvatarImage src={user.imageUrl} alt={user.username} />
+              <AvatarImage src={user[1].imageUrl} alt={user[1].username} />
               <AvatarFallback>{initialName}</AvatarFallback>
             </Avatar>
           </Button>
@@ -48,20 +48,28 @@ function AuthDropDown({ user }: UserProps) {
           <DropdownMenuLabel>
             <div className="flex flex-col space-y-1 items-start">
               <p className="text-sm font-medium leading-none">
-                {user.firstName} {user.lastName}
+                {user[1].firstName} {user[1].lastName}
               </p>
               <p className="text-sm leading-none text-muted-foreground">
-                {user.email}
+                {user[1].email}
               </p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuGroup>
             <DropdownMenuItem asChild>
-              <Link to="#">
-                <Icons.dashboard className="size-4 mr-2" />
-                Dashboard
-                <DropdownMenuShortcut>⇧⌘D</DropdownMenuShortcut>
-              </Link>
+              {user[1].role === "ADMIN" ? (
+                <Link to="/admin">
+                  <Icons.dashboard className="size-4 mr-2" />
+                  Dashboard
+                  <DropdownMenuShortcut>⇧⌘D</DropdownMenuShortcut>
+                </Link>
+              ) : (
+                <Link to="/profile">
+                  <Icons.dashboard className="size-4 mr-2" />
+                  Profile
+                  <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                </Link>
+              )}
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link to="#">

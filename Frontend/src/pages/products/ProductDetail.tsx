@@ -8,6 +8,9 @@ import { formatPrice } from "../../lib/utils";
 import { Separator } from "../../components/ui/separator";
 import Rating from "../../components/products/Rating";
 import AddtoCart from "../../components/AddtoCartForm";
+import ReviewList from "../../components/reviews/ReviewList";
+import { getAverageRating } from "../../lib/review";
+import { reviews } from "../../data/review";
 import {
   Accordion,
   AccordionContent,
@@ -20,6 +23,8 @@ function ProductDetail() {
   console.log(productId);
   const product = products.find((product) => product.id == productId);
 
+  const averageRating = getAverageRating(reviews);
+
   return (
     <div className="container mx-auto px-4 md:px-0">
       <Button asChild variant="outline" className="mt-8">
@@ -28,7 +33,7 @@ function ProductDetail() {
         </Link>
       </Button>
       <section className="flex flex-col gap-16 md:flex-row md:gap-16 my-6">
-        <div className="mx-auto w-full md:w-1/2 max-w-75">
+        <div className="mx-auto w-full md:w-1/2 max-w-75 self-start">
           <img
             src={product?.images[0]}
             alt="product image"
@@ -49,7 +54,10 @@ function ProductDetail() {
             {product?.inventory} in stock
           </p>
           <div className="flex items-center justify-between">
-            <Rating rating={Number(product?.rating)} />
+            <Rating rating={averageRating} />
+            <span className="text-sm text-muted-foreground">
+              ({reviews.length} reviews)
+            </span>
           </div>
           <AddtoCart canBuy={product?.status === "order" ? true : false} />
           <Separator className="my-1" />
@@ -67,14 +75,20 @@ function ProductDetail() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+          <Separator className="my-4" />
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Customer Reviews</h3>
+            <ReviewList reviews={reviews} />
+          </div>
         </div>
       </section>
       <hr />
-      <section className="space-y-6 overflow-hidden">
+      <section className="space-y-6 overflow-auto">
         <h2 className="line-clamp-1 text-2xl  font-bold"></h2>
         <ScrollArea className="pb-4">
           <div className="flex gap-4">
-            {products.slice(0, 4).map((item) => (
+            {products.slice(0, 6).map((item) => (
               <ProductCard key={item.id} product={item} className="min-w-65" />
             ))}
           </div>

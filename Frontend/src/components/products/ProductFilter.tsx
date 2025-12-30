@@ -50,7 +50,7 @@ export default function ProductFilter({ filterList }: FilterProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-base mb-4 block">
-                Furniture Made By
+                Snack Categories
               </FormLabel>
 
               {filterList.categories.map((item) => (
@@ -88,7 +88,7 @@ export default function ProductFilter({ filterList }: FilterProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-base mb-4 block">
-                Furniture Types
+                Snack Types
               </FormLabel>
 
               {filterList.types.map((item) => (

@@ -34,7 +34,9 @@ export type User = {
   lastName: string;
   username: string;
   email: string;
+  phone: string;
   imageUrl: string;
+  role: string;
 };
 
 export type Cart = {
@@ -49,6 +51,16 @@ export type Cart = {
   };
   category: string;
   subcategory: string;
+};
+
+export type Review = {
+  id: string;
+  rating: number;
+  comment?: string;
+  user: {
+    id: string;
+    name: string;
+  };
 };
 
 export type MainNavItem = NavItemWithChildren;

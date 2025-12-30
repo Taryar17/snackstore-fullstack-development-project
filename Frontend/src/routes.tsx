@@ -6,6 +6,15 @@ import AboutPage from "./pages/About";
 import ErrorPage from "./pages/Error";
 import LoginPage from "./pages/auth/Login";
 import RegisterPage from "./pages/auth/Register";
+import ProfilePage from "./pages/Profile";
+import AdminRootLayout from "./pages/admin/AdminRootLayout";
+import AdminDashboard from "./pages/admin/dashboard/AdminDashboard";
+import AdminProductList from "./pages/admin/products/AdminProductList";
+import AdminProductDetail from "./pages/admin/products/AdminProductDetail";
+import AdminUserList from "./pages/admin/users/AdminUserList";
+import AdminOrderList from "./pages/admin/orders/AdminOrderList";
+import AdminUserDetail from "./pages/admin/users/AdminUserDetail";
+import AdminOrderDetail from "./pages/admin/orders/AdminOrderDetail";
 
 const ProductRootLayout = lazy(
   () => import("./pages/products/ProductRootLayout")
@@ -23,8 +32,30 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     errorElement: <ErrorPage />,
     children: [
-      { index: true, element: <HomePage /> },
-      { path: "about", element: <AboutPage /> },
+      {
+        index: true,
+        element: (
+          <Suspense fallback={<SuspenseFallback />}>
+            <HomePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "about",
+        element: (
+          <Suspense fallback={<SuspenseFallback />}>
+            <AboutPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/profile",
+        element: (
+          <Suspense fallback={<SuspenseFallback />}>
+            <ProfilePage />
+          </Suspense>
+        ),
+      },
       {
         path: "products",
         element: (
@@ -68,5 +99,44 @@ export const router = createBrowserRouter([
         <RegisterPage />
       </Suspense>
     ),
+  },
+  {
+    path: "admin",
+    element: (
+      <Suspense fallback={<SuspenseFallback />}>
+        <AdminRootLayout />
+      </Suspense>
+    ),
+    children: [
+      {
+        index: true,
+        element: (
+          <Suspense fallback={<SuspenseFallback />}>
+            <AdminDashboard />
+          </Suspense>
+        ),
+      },
+      {
+        path: "products",
+        children: [
+          { index: true, element: <AdminProductList /> },
+          { path: ":productId", element: <AdminProductDetail /> },
+        ],
+      },
+      {
+        path: "users",
+        children: [
+          { index: true, element: <AdminUserList /> },
+          { path: ":userId", element: <AdminUserDetail /> },
+        ],
+      },
+      {
+        path: "orders",
+        children: [
+          { index: true, element: <AdminOrderList /> },
+          { path: ":orderId", element: <AdminOrderDetail /> },
+        ],
+      },
+    ],
   },
 ]);
