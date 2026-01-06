@@ -372,7 +372,7 @@ export const login = [
         }
       }
       // --------- Ending -----------------------
-      return next(createError(req.t("Wrong Password"), 401, errorCode.invalid));
+      return next(createError("Wrong Password", 401, errorCode.invalid));
     }
 
     // Authorization token
@@ -773,3 +773,24 @@ export const resetPassword = [
       });
   },
 ];
+
+interface CustomRequest extends Request {
+  userId?: number;
+}
+
+export const authCheck = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.userId;
+  const user = await getUserbyId(userId!);
+  checkUserIfNotExist(user);
+
+  res.status(200).json({
+    message: "You are authenticated.",
+    userId: user?.id,
+    username: user?.firstName + " " + user?.lastLogin,
+    image: user?.image,
+  });
+};

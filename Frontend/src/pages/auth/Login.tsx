@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Icons } from "../../components/icons";
 import Banner from "../../data/images/snacks.png";
-import { LoginForm } from "../../components/auth/LoginForm";
+import LoginForm from "../../components/auth/LoginForm";
 function Login() {
   return (
     <div className="relative">

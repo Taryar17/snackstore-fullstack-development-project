@@ -18,6 +18,7 @@ export default function CarouselPlugin({ products }: ProductProps) {
   const plugin = React.useRef(
     Autoplay({ delay: 2000, stopOnInteraction: true })
   );
+  const imageURL = import.meta.env.VITE_IMG_URL;
   return (
     <Carousel
       plugins={[plugin.current]}
@@ -31,8 +32,10 @@ export default function CarouselPlugin({ products }: ProductProps) {
             <div className="pl-1 lg:basis-1/3">
               <div className="flex p-4 lg:px-4 gap-4">
                 <img
-                  src={product.images[0]}
+                  src={imageURL + product.images[0].path}
                   alt={product.name}
+                  loading="lazy"
+                  decoding="async"
                   className="size-28 rounded-md"
                 />
                 <div className="">

@@ -19,6 +19,7 @@ interface ProductProps extends React.HtmlHTMLAttributes<HTMLDivElement> {
 }
 
 function ProductCard({ product, className }: ProductProps) {
+  const imageURL = import.meta.env.VITE_IMG_URL;
   return (
     <Card className={cn("size-full overflow-hidden rounded-lg", className)}>
       <Link to={`/products/${product.id}`} aria-label={product.name}>
@@ -26,8 +27,9 @@ function ProductCard({ product, className }: ProductProps) {
           <CardHeader className="border-b p-0">
             <AspectRatio ratio={1 / 1} className="">
               <img
-                src={product.images[0]}
+                src={imageURL + product.images[0].path}
                 alt="product image"
+                decoding="async"
                 loading="lazy"
                 className="size-full object-contain"
               />

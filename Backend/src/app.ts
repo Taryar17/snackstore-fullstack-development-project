@@ -36,6 +36,10 @@ var corsOptions = {
   credentials: true,
 };
 
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "same-site");
+  next();
+});
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

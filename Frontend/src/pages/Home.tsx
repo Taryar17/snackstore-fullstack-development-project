@@ -1,15 +1,14 @@
-import { Link } from "react-router-dom";
+import { Link, useLoaderData } from "react-router-dom";
 import Snack from "../data/images/snacks.png";
 import { Button } from "../components/ui/button";
 import CarouselPlugin from "../components/products/CarouselCard";
-import { products } from "../data/product";
 import PreviewProduct from "../components/products/PreviewProduct";
 import ProductCard from "../components/products/ProductCard";
 import { FieldSeparator } from "../components/ui/field";
-
-const sampleProducts = products.slice(0, 6);
+import type { Product } from "../types";
 
 function Home() {
+  const { productsData } = useLoaderData();
   return (
     <>
       <div className="container mx-auto">
@@ -55,7 +54,7 @@ function Home() {
         <h1 className="mt-4 mb-4 text-xl font-extrabold text-amber-800 lg:mb-8 lg:text-2xl">
           Best Sellers
         </h1>
-        <CarouselPlugin products={products} />
+        <CarouselPlugin products={productsData.products} />
         <FieldSeparator />
         <PreviewProduct
           title="Featured Products"
@@ -64,9 +63,12 @@ function Home() {
         />
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-6 px-4 mb-4 md:px-0">
-          {sampleProducts.map((product) => (
-            <ProductCard product={product} key={product.id} />
-          ))}
+          {productsData &&
+            productsData.products
+              .slice(0, 6)
+              .map((product: Product) => (
+                <ProductCard product={product} key={product.id} />
+              ))}
         </div>
       </div>
     </>
