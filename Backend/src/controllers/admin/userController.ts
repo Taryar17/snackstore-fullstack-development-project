@@ -1,19 +1,35 @@
 import { Request, Response, NextFunction } from "express";
+import * as service from "../../services/adminUserService";
 
 interface CustomRequest extends Request {
   userId?: number;
   user?: any;
 }
 
-export const getAllUsers = async (
-  req: CustomRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  const user = req.user;
-  res.status(200).json({
-    message: "All users retrieved successfully",
-    currentUserRole: user.role,
+export const getUsers = async (_req: Request, res: Response) => {
+  const users = await service.getAdminUsers();
+  res.json({ users });
+};
+
+export const getUserDetail = async (req: Request, res: Response) => {
+  const userId = Number(req.params.id);
+  const user = await service.getAdminUserById(userId);
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json({ user });
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  const { id, role, status } = req.body;
+
+  await service.updateAdminUser({
+    id: Number(id),
+    role,
+    status,
   });
-  next();
+
+  res.json({ success: true });
 };

@@ -25,4 +25,5 @@ router.post("/verify", verifyOtpForPassword);
 router.post("/reset-password", resetPassword);
 
 router.get("/auth-check", auth, authCheck);
+
 export default router;

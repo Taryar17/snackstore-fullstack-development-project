@@ -25,7 +25,19 @@ export const updateOtp = async (id: number, otpData: any) => {
 };
 
 export const createUser = async (userData: any) => {
-  return prisma.user.create({ data: userData });
+  return prisma.user.create({
+    data: {
+      phone: userData.phone,
+      password: userData.password,
+      randToken: userData.randToken,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email: userData.email,
+      address: userData.address,
+      city: userData.city,
+      region: userData.region,
+    },
+  });
 };
 
 export const updateUser = async (id: number, userData: any) => {

@@ -7,6 +7,8 @@ export const createOneProduct = async (data: any) => {
     price: data.price,
     discount: data.discount,
     inventory: data.inventory,
+    status: data.status,
+    pstatus: data.pstatus,
     category: {
       connectOrCreate: {
         where: { name: data.category },
@@ -40,6 +42,29 @@ export const createOneProduct = async (data: any) => {
   }
   return prisma.product.create({ data: productdata });
 };
+export const getAllAdminProducts = async () => {
+  return prisma.product.findMany({
+    include: {
+      images: true,
+      category: true,
+      type: true,
+      tags: true,
+      reviews: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              phone: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
 
 export const getProductById = async (id: number) => {
   return prisma.product.findUnique({
@@ -57,6 +82,8 @@ export const updateOneProduct = async (productId: number, data: any) => {
     price: data.price,
     discount: data.discount,
     inventory: data.inventory,
+    status: data.status || "ACTIVE",
+    pstatus: data.pstatus || "ORDER",
     category: {
       connectOrCreate: {
         where: { name: data.category },
@@ -122,10 +149,17 @@ export const getProductWithRelations = async (id: number, userId: number) => {
           path: true,
         },
       },
+      users: {
+        where: {
+          id: userId,
+        },
+        select: {
+          id: true,
+        },
+      },
     },
   });
 };
-
 export const getProductsList = async (options: any) => {
   return prisma.product.findMany(options);
 };

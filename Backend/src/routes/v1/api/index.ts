@@ -1,5 +1,9 @@
 import express from "express";
 import {
+  getOrderDetail,
+  getUserOrders,
+  updateProfileValidation,
+  updateUserProfile,
   uploadProfile,
   uploadProfileMultiple,
   uploadProfileOptimize,
@@ -8,9 +12,21 @@ import { auth } from "../../../middlewares/auth";
 import upload, { uploadMemory } from "../../../middlewares/uploadFiles";
 import { getMyPhoto } from "../../../controllers/api/profileController";
 import {
+  getCategoryType,
+  getPreorderProductsByPagination,
   getProduct,
   getProductsByPagination,
+  toggleFavourite,
 } from "../../../controllers/api/productController";
+import {
+  createReview,
+  getProductReviews,
+} from "../../../controllers/api/reviewController";
+import {
+  createOrder,
+  getUserCheckoutInfo,
+} from "../../../controllers/api/orderController";
+import { authData } from "../../../controllers/authControllers";
 
 const router = express.Router();
 
@@ -31,5 +47,21 @@ router.get("/profile/my-photo", getMyPhoto); // Just for testing
 
 router.get("/products/:id", auth, getProduct);
 router.get("/products", auth, getProductsByPagination);
+
+router.post("/reviews", auth, createReview);
+router.get("/reviews/:productId", auth, getProductReviews);
+router.get("/preorder-products", auth, getPreorderProductsByPagination);
+
+router.get("/filter-type", auth, getCategoryType);
+router.patch("/products/toggle-favourite", auth, toggleFavourite);
+
+router.get("/checkout-info", auth, getUserCheckoutInfo);
+router.post("/orders", auth, createOrder);
+router.get("/authdata", auth, authData);
+
+router.get("/profile", auth, authData);
+router.put("/profile", auth, updateProfileValidation, updateUserProfile);
+router.get("/profile/orders", auth, getUserOrders);
+router.get("/profile/orders/:orderId", auth, getOrderDetail);
 
 export default router;

@@ -9,7 +9,7 @@
     "cache": "nodemon src/jobs/workers/cacheWorker.ts",
     "start": "node index.ts",
     "dev:node": "nodemon src/index.ts",
-    "dev": "nodemon src/index.ts"
+    "dev": "npm-run-all --parallel dev:node work cache"
   },
   "author": "",
   "license": "ISC",

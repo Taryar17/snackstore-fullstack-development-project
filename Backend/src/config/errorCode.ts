@@ -12,4 +12,6 @@ export const errorCode = {
   wrongOtp: "Error_WrongOtp",
   unauthorised: "Error_Unauthorised",
   maintenance: "Error_Maintenance",
+  notFound: "Error_NotFound",
+  server: "Error_Server",
 };

@@ -10,17 +10,10 @@ import routes from "./routes/v1/web";
 import cookieParser from "cookie-parser";
 import i18next from "i18next";
 import middleware from "i18next-http-middleware";
-import { profile } from "console";
-import {
-  createOrUpdateSettingStatus,
-  getSettingStatus,
-} from "./services/settingService";
-
-//import * as errorController from "./controllers/web/errorControllers";
 
 export const app = express();
 
-var whiteList = ["http://example1.com", "http://localhost:5173"];
+var whiteList = ["http://localhost:5173"];
 var corsOptions = {
   origin: function (
     origin: any,
@@ -36,20 +29,27 @@ var corsOptions = {
   credentials: true,
 };
 
-app.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Resource-Policy", "same-site");
-  next();
-});
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors(corsOptions));
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 app.use(compression());
 app.use(limiter);
-app.use(express.static("public"));
-app.use(express.static("uploads"));
 app.use(cookieParser());
+app.use(express.static("public"));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "..", "uploads"), {
+    setHeaders: (res) => {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    },
+  })
+);
 app.use(routes);
 app.use(middleware.handle(i18next));
 

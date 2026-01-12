@@ -200,6 +200,13 @@ export const confirmPassword = [
     .matches("^[0-9]+$")
     .isLength({ min: 8, max: 8 }),
   body("token", "Invalid token").trim().notEmpty().escape(),
+  // Add new fields for user info
+  body("firstName").notEmpty().trim().escape(),
+  body("lastName").notEmpty().trim().escape(),
+  body("email").notEmpty().isEmail().withMessage("Invalid email"),
+  body("address").notEmpty().trim().escape(),
+  body("city").notEmpty().trim().escape(),
+  body("region").notEmpty().trim().escape(),
   async (req: Request, res: Response, next: NextFunction) => {
     const errors = validationResult(req).array({ onlyFirstError: true });
     // If validation error occurs
@@ -207,7 +214,17 @@ export const confirmPassword = [
       return next(createError(errors[0].msg, 400, errorCode.invalid));
     }
 
-    const { phone, password, token } = req.body;
+    const {
+      phone,
+      password,
+      token,
+      firstName,
+      lastName,
+      email,
+      address,
+      city,
+      region,
+    } = req.body;
 
     const user = await getUserbyPhone(phone);
     checkUserExist(user);
@@ -248,11 +265,17 @@ export const confirmPassword = [
     const hashPassword = await bcrypt.hash(password, salt);
     const randToken = "I will replace Refresh Token soon.";
 
-    // Creating a new account
+    // Creating a new account with additional info
     const userData = {
       phone,
       password: hashPassword,
       randToken,
+      firstName: firstName || null,
+      lastName: lastName || null,
+      email: email || null,
+      address: address || null,
+      city: city || null,
+      region: region || null,
     };
     const newUser = await createUser(userData);
 
@@ -300,6 +323,14 @@ export const confirmPassword = [
       .json({
         message: "Successfully created an account.",
         userId: newUser.id,
+        userInfo: {
+          firstName: newUser.firstName,
+          lastName: newUser.lastName,
+          email: newUser.email,
+          address: newUser.address,
+          city: newUser.city,
+          region: newUser.region,
+        },
       });
   },
 ];
@@ -790,7 +821,37 @@ export const authCheck = async (
   res.status(200).json({
     message: "You are authenticated.",
     userId: user?.id,
-    username: user?.firstName + " " + user?.lastLogin,
+    firstName: user?.firstName,
+    lastName: user?.lastName,
+    username: user?.firstName + " " + user?.lastName,
+    phone: user?.phone,
+    email: user?.email,
     image: user?.image,
+    role: user?.role,
+  });
+};
+
+export const authData = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.userId;
+  const user = await getUserbyId(userId!);
+  checkUserIfNotExist(user);
+
+  res.status(200).json({
+    userId: user?.id,
+    firstName: user?.firstName,
+    lastName: user?.lastName,
+    username: user?.firstName + " " + user?.lastName,
+    phone: user?.phone,
+    address: user?.address,
+    city: user?.city,
+    region: user?.region,
+    email: user?.email,
+    image: user?.image,
+    role: user?.role,
+    createdAt: user?.createdAt,
   });
 };

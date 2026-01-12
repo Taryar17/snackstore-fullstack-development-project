@@ -14,18 +14,11 @@ import {
   getTypeList,
 } from "../../services/productService";
 import cacheQueue from "../../jobs/queues/cacheQueue";
-// import { getOrSetCache } from "../../utils/cache";
-// import {
-//   getCategoryList,
-//   getProductsList,
-//   getProductWithRelations,
-//   getTypeList,
-// } from "../../services/productService";
-// import {
-//   addProductToFavourite,
-//   removeProductFromFavourite,
-// } from "../../services/userService";
-// import { cacheQueue } from "../../jobs/queues/cacheQueue";
+import {
+  addProductToFavourite,
+  removeProductFromFavourite,
+} from "../../services/userService";
+import { pStatus } from "../../../generated/prisma/enums";
 
 interface CustomRequest extends Request {
   userId?: number;
@@ -55,7 +48,6 @@ export const getProduct = [
     res.status(200).json({ message: "Product Detail", product });
   },
 ];
-
 export const getProductsByPagination = [
   query("cursor", "Cursor must be Post ID.").isInt({ gt: 0 }).optional(),
   query("limit", "Limit number must be unsigned integer.")
@@ -72,6 +64,7 @@ export const getProductsByPagination = [
     const limit = req.query.limit || 5;
     const category = req.query.category;
     const type = req.query.type;
+    const pstatus = req.query.pstatus;
 
     const userId = req.userId;
     const user = await getUserbyId(userId!);
@@ -100,6 +93,7 @@ export const getProductsByPagination = [
 
     const where = {
       AND: [
+        pstatus ? { pstatus } : {},
         categoryList.length > 0 ? { categoryId: { in: categoryList } } : {},
         typeList.length > 0 ? { typeId: { in: typeList } } : {},
       ],
@@ -117,12 +111,13 @@ export const getProductsByPagination = [
         price: true,
         discount: true,
         status: true,
+        pstatus: true,
         images: {
           select: {
             id: true,
             path: true,
           },
-          take: 1, // Limit to the first image
+          take: 1,
         },
       },
       orderBy: {
@@ -130,7 +125,112 @@ export const getProductsByPagination = [
       },
     };
 
-    const cacheKey = `products:${JSON.stringify(req.query)}`;
+    const cacheKey = `products:ORDER${pstatus || "all"}:${JSON.stringify(
+      req.query
+    )}`;
+    const products = await getOrSetCache(cacheKey, async () => {
+      return await getProductsList(options);
+    });
+
+    const hasNextPage = products.length > +limit;
+
+    if (hasNextPage) {
+      products.pop();
+    }
+
+    const nextCursor =
+      products.length > 0 ? products[products.length - 1].id : null;
+
+    res.status(200).json({
+      message: "Get All infinite products",
+      hasNextPage,
+      nextCursor,
+      prevCursor: lastCursor,
+      products,
+    });
+  },
+];
+
+export const getPreorderProductsByPagination = [
+  query("cursor", "Cursor must be Post ID.").isInt({ gt: 0 }).optional(),
+  query("limit", "Limit number must be unsigned integer.")
+    .isInt({ gt: 3 })
+    .optional(),
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const errors = validationResult(req).array({ onlyFirstError: true });
+    // If validation error occurs
+    if (errors.length > 0) {
+      return next(createError(errors[0].msg, 400, errorCode.invalid));
+    }
+
+    const lastCursor = req.query.cursor;
+    const limit = req.query.limit || 5;
+    const category = req.query.category;
+    const type = req.query.type;
+    const pstatus = req.query.pstatus;
+
+    const userId = req.userId;
+    const user = await getUserbyId(userId!);
+    checkUserIfNotExist(user);
+
+    let categoryList: number[] = [];
+    let typeList: number[] = [];
+
+    if (category) {
+      categoryList = category
+        .toString()
+        .split(",")
+        .map((c) => Number(c))
+        .filter((c) => c > 0);
+    }
+
+    if (type) {
+      typeList = type
+        .toString()
+        .split(",")
+        .map((t) => Number(t))
+        .filter((t) => t > 0);
+    }
+
+    console.log("categoryList -----", categoryList);
+
+    const where = {
+      AND: [
+        { pstatus: "PREORDER" },
+        categoryList.length > 0 ? { categoryId: { in: categoryList } } : {},
+        typeList.length > 0 ? { typeId: { in: typeList } } : {},
+      ],
+    };
+
+    const options = {
+      where,
+      take: +limit + 1,
+      skip: lastCursor ? 1 : 0,
+      cursor: lastCursor ? { id: +lastCursor } : undefined,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        discount: true,
+        status: true,
+        pstatus: true,
+        images: {
+          select: {
+            id: true,
+            path: true,
+          },
+          take: 1,
+        },
+      },
+      orderBy: {
+        id: "desc",
+      },
+    };
+
+    const cacheKey = `products:PREORDER${pstatus || "all"}:${JSON.stringify(
+      req.query
+    )}`;
     const products = await getOrSetCache(cacheKey, async () => {
       return await getProductsList(options);
     });
@@ -173,43 +273,43 @@ export const getCategoryType = async (
   });
 };
 
-// export const toggleFavourite = [
-//   body("productId", "Product ID must not be empty.").isInt({ gt: 0 }),
-//   body("favourite", "Favourite must not be empty.").isBoolean(),
-//   async (req: CustomRequest, res: Response, next: NextFunction) => {
-//     const errors = validationResult(req).array({ onlyFirstError: true });
-//     // If validation error occurs
-//     if (errors.length > 0) {
-//       return next(createError(errors[0].msg, 400, errorCode.invalid));
-//     }
+export const toggleFavourite = [
+  body("productId", "Product ID must not be empty.").isInt({ gt: 0 }),
+  body("favourite", "Favourite must not be empty.").isBoolean(),
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const errors = validationResult(req).array({ onlyFirstError: true });
+    // If validation error occurs
+    if (errors.length > 0) {
+      return next(createError(errors[0].msg, 400, errorCode.invalid));
+    }
 
-//     const userId = req.userId;
-//     const user = await getUserbyId(userId!);
-//     checkUserIfNotExist(user);
+    const userId = req.userId;
+    const user = await getUserbyId(userId!);
+    checkUserIfNotExist(user);
 
-//     const { productId, favourite } = req.body;
+    const { productId, favourite } = req.body;
 
-//     if (favourite) {
-//       await addProductToFavourite(user!.id, productId);
-//     } else {
-//       await removeProductFromFavourite(user!.id, productId);
-//     }
+    if (favourite) {
+      await addProductToFavourite(user!.id, productId);
+    } else {
+      await removeProductFromFavourite(user!.id, productId);
+    }
 
-//     await cacheQueue.add(
-//       "invalidate-product-cache",
-//       {
-//         pattern: "products:*",
-//       },
-//       {
-//         jobId: `invalidate-${Date.now()}`,
-//         priority: 1,
-//       }
-//     );
+    await cacheQueue.add(
+      "invalidate-product-cache",
+      {
+        pattern: "products:*",
+      },
+      {
+        jobId: `invalidate-${Date.now()}`,
+        priority: 1,
+      }
+    );
 
-//     res.status(200).json({
-//       message: favourite
-//         ? "Successfully added favourite"
-//         : "Successfully removed favourite",
-//     });
-//   },
-// ];
+    res.status(200).json({
+      message: favourite
+        ? "Successfully added favourite"
+        : "Successfully removed favourite",
+    });
+  },
+];
