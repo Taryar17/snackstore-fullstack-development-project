@@ -15,8 +15,31 @@ import {
   LayoutIcon,
   BackpackIcon,
   LayersIcon,
+  CubeIcon,
+  HeartFilledIcon,
 } from "@radix-ui/react-icons";
-import { MinusIcon, TrashIcon } from "lucide-react";
+import {
+  CheckCircleIcon,
+  CircleIcon,
+  ClockIcon,
+  CreditCardIcon,
+  DollarSignIcon,
+  EyeIcon,
+  FolderIcon,
+  LogOutIcon,
+  MailIcon,
+  MinusIcon,
+  PhoneIcon,
+  RefreshCwIcon,
+  ShieldIcon,
+  ShoppingBagIcon,
+  TagIcon,
+  TrashIcon,
+  TrendingUpIcon,
+  UploadIcon,
+  UsersIcon,
+  XIcon,
+} from "lucide-react";
 export type IconProps = React.HTMLAttributes<SVGElement>;
 
 export const Icons = {
@@ -54,7 +77,26 @@ export const Icons = {
   layout: LayoutIcon,
   package: BackpackIcon,
   layers: LayersIcon,
-
+  cube: CubeIcon,
+  heartFill: HeartFilledIcon,
+  spinner: CircleIcon,
+  upload: UploadIcon,
+  folder: FolderIcon,
+  tag: TagIcon,
+  clock: ClockIcon,
+  users: UsersIcon,
+  refresh: RefreshCwIcon,
+  shoppingBag: ShoppingBagIcon,
+  shield: ShieldIcon,
+  creditCard: CreditCardIcon,
+  trendingUp: TrendingUpIcon,
+  checkCircle: CheckCircleIcon,
+  dollarSign: DollarSignIcon,
+  phone: PhoneIcon,
+  mail: MailIcon,
+  eye: EyeIcon,
+  x: XIcon,
+  logout: LogOutIcon,
   cart: (props: IconProps) => (
     <svg
       xmlns="http://www.w3.org/2000/svg"

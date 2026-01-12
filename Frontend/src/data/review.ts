@@ -12,19 +12,19 @@ export const reviews = [
     user: { id: "uuid2", name: "Bob" },
   },
   {
-    id: "uuid2",
+    id: "uuid3",
     rating: 4,
     comment: "Good taste, packaging could be better.",
     user: { id: "uuid2", name: "Bob" },
   },
   {
-    id: "uuid2",
+    id: "uuid4",
     rating: 4,
     comment: "Good taste, packaging could be better.",
     user: { id: "uuid2", name: "Bob" },
   },
   {
-    id: "uuid2",
+    id: "uuid5",
     rating: 4,
     comment: "Good taste, packaging could be better.",
     user: { id: "uuid2", name: "Bob" },

@@ -22,7 +22,9 @@ function ReviewList({ reviews }: ReviewListProps) {
         {reviews.map((review) => (
           <div key={review.id} className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-medium">{review.user.name}</span>
+              <span className="font-medium">
+                {review.user.firstName} {review.user.lastName}
+              </span>
               <Rating rating={review.rating} />
             </div>
 

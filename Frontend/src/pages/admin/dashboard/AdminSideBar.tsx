@@ -4,12 +4,13 @@ import { Link } from "react-router-dom";
 import { Button } from "../../../components/ui/button";
 
 const adminNav = [
-  { title: "Dashboard", href: "/admin", icon: Icons.layout },
-  { title: "Products", href: "/admin/products", icon: Icons.package },
-  { title: "Categories", href: "/admin/categories", icon: Icons.layers },
-  { title: "Orders", href: "/admin/orders", icon: Icons.cart },
-  { title: "Users", href: "/admin/users", icon: Icons.user },
-  { title: "Reviews", href: "/admin/reviews", icon: Icons.star },
+  { title: "Dashboard", href: "/admins", icon: Icons.layout },
+  { title: "Products", href: "/admins/products", icon: Icons.package },
+  { title: "Categories", href: "/admins/categories", icon: Icons.layers },
+  { title: "Types", href: "/admins/types", icon: Icons.cube },
+  { title: "Orders", href: "/admins/orders", icon: Icons.cart },
+  { title: "Users", href: "/admins/users", icon: Icons.user },
+  { title: "Reviews", href: "/admins/reviews", icon: Icons.star },
 ];
 
 function AdminSidebar() {

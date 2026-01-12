@@ -6,29 +6,29 @@ export const siteConfig = {
       title: "Order Now",
       card: [
         {
+          title: "Cheesy Delights",
+          href: "/products?categories=1",
+          description: "Rich, creamy, and full of cheese flavor",
+        },
+        {
           title: "Spicy Snacks",
-          href: "/snacks/spicy",
+          href: "/products?categories=2",
           description: "Bold flavors for heat lovers",
         },
         {
+          title: "Chocolate Snacks",
+          href: "/products?categories=3",
+          description: "Indulgent chocolate goodness in every bite",
+        },
+        {
           title: "Salty Bites",
-          href: "/snacks/salty",
+          href: "/products?categories=4",
           description: "Classic salty and crunchy treats",
         },
         {
           title: "Sweetened Treats",
-          href: "/snacks/sweetened",
+          href: "/products?categories=6",
           description: "Lightly sweet and satisfying snacks",
-        },
-        {
-          title: "Cheesy Delights",
-          href: "/snacks/cheesy",
-          description: "Rich, creamy, and full of cheese flavor",
-        },
-        {
-          title: "Chocolate Snacks",
-          href: "/snacks/chocolate",
-          description: "Indulgent chocolate goodness in every bite",
         },
       ],
       menu: [
@@ -43,27 +43,22 @@ export const siteConfig = {
       items: [
         {
           title: "Savory Snacks",
-          href: "/snacks/savory",
-          external: true,
-        },
-        {
-          title: "Sweet Treats",
-          href: "/snacks/sweet",
+          href: "/products?types=1",
           external: true,
         },
         {
           title: "Fried Favorites",
-          href: "/snacks/fried",
+          href: "/products?types=2",
           external: true,
         },
         {
-          title: "Baked Bites",
-          href: "/snacks/baked",
+          title: "Confectionary Bites",
+          href: "/products?types=3",
           external: true,
         },
         {
           title: "Healthy Choices",
-          href: "/snacks/healthy",
+          href: "/products?types=4",
           external: true,
         },
       ],
@@ -132,7 +127,7 @@ export const siteConfig = {
           external: true,
         },
         {
-          title: "coffee",
+          title: "Coffee",
           href: "https://coffee.com",
           external: true,
         },

@@ -9,7 +9,7 @@ export interface NavItemWithChildren extends NavItem {
   menu?: NavItemWithChildren[];
 }
 
-type Image = {
+export type Image = {
   id: number;
   path: string;
 };
@@ -30,11 +30,12 @@ export type Product = {
   review: string[];
   inventory: number;
   status: string;
+  pstatus: string;
 };
 
 export type Category = {
-  id: string;
-  label: string;
+  id: number;
+  name: string;
 };
 
 export type User = {
@@ -42,34 +43,46 @@ export type User = {
   firstName: string;
   lastName: string;
   username: string;
+  address: string;
+  city: string;
+  region: string;
   email: string;
   phone: string;
-  imageUrl: string;
+  image: string;
   role: string;
+  createdAt: Date;
 };
 
 export type Cart = {
-  id: string;
+  id: number;
   name: string;
   price: number;
   quantity: number;
-  image: {
-    id: string;
-    name: string;
-    url: string;
-  };
-  category: string;
-  subcategory: string;
+  image: string;
 };
 
 export type Review = {
   id: string;
   rating: number;
   comment?: string;
+  status: string;
   user: {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
+    imageUrl: string;
   };
 };
+export interface CurrentUser {
+  id: number;
+  firstName?: string;
+  lastName?: string;
+  phone: string;
+  email?: string;
+  role: "USER" | "ADMIN";
+  status: "ACTIVE" | "INACTIVE" | "FREEZE";
+  image?: string;
+  lastLogin?: string;
+}
 
 export type MainNavItem = NavItemWithChildren;

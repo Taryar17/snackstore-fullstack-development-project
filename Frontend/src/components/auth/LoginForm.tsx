@@ -133,7 +133,7 @@ export default function LoginForm() {
                         <div className="flex items-center">
                           <FormLabel>Password</FormLabel>
                           <Link
-                            to="#"
+                            to="/reset"
                             className="ml-auto text-sm inline-block hover:underline underline-offset-4"
                           >
                             Forgot your password?

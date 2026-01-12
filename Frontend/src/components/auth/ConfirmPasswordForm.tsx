@@ -1,158 +1,186 @@
-import { useState } from "react";
-import {
-  Link,
-  useActionData,
-  useNavigation,
-  useSubmit,
-} from "react-router-dom";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
-import { Icons } from "../../components/icons";
-import { cn } from "../../lib/utils";
+// pages/auth/ConfirmPassword.tsx
+import { Form, useActionData, useNavigation } from "react-router-dom";
 import { Button } from "../../components/ui/button";
-import { PasswordInput } from "./PasswordInput";
+import { Input } from "../../components/ui/input";
 import {
-  Form,
-  FormControl,
-  //FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../../components/ui/form";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "../../components/ui/field";
+import { Link } from "react-router-dom";
+import { Icons } from "../../components/icons";
+import useAuthStore from "../../store/authStore";
 
-const FormSchema = z.object({
-  password: z
-    .string()
-    .min(8, "Password must be 8 digits.")
-    .max(8, "Password must be 8 digits.")
-    .regex(/^\d+$/, "Password must be numbers"),
-  confirmPassword: z
-    .string()
-    .min(8, "Password must be 8 digits.")
-    .max(8, "Password must be 8 digits.")
-    .regex(/^\d+$/, "Password must be numbers"),
-});
-
-export function ConfirmPasswordForm({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"div">) {
-  const submit = useSubmit();
-  const navigation = useNavigation();
+function ConfirmPasswordPage() {
   const actionData = useActionData() as { error?: string } | undefined;
-  const [clientError, setClientError] = useState<string | null>(null);
-
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
-    defaultValues: {
-      password: "",
-      confirmPassword: "",
-    },
-  });
-
-  function onSubmit(values: z.infer<typeof FormSchema>) {
-    // console.log(values);
-    if (values.password !== values.confirmPassword) {
-      setClientError("Passwords do not match.");
-      return;
-    }
-    setClientError(null);
-    submit(values, { method: "post", action: "/register/confirm-password" });
-  }
+  const navigation = useNavigation();
+  const isSubmitting = navigation.state === "submitting";
+  const authStore = useAuthStore();
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col items-center gap-2">
-          <Link to="#" className="flex flex-col items-center gap-2 font-medium">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md">
-              <Icons.logo className="mr-2 h-6 w-6" aria-hidden="true" />
-            </div>
-            <span className="sr-only">Confirm Password</span>
-          </Link>
-          <h1 className="text-xl font-bold">Please confirm your password</h1>
-          <div className="text-center text-sm">
-            Passwords must be 8 digits long and contain only numbers. They must
-            match.
-          </div>
-        </div>
-        <div className="flex flex-col gap-6">
-          <div className="grid gap-2">
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-                autoComplete="off"
-              >
-                <FormField
-                  control={form.control}
+    <div className="flex min-h-screen place-items-center justify-center items-center px-4">
+      <Link
+        to="/"
+        className="text-foreground/80 hover:text-foreground fixed top-6 left-8 flex items-center text-lg font-bold tracking-tight transition-colors"
+      >
+        <Icons.logo className="mr-2 size-6" aria-hidden="true" />
+        <span>Snack Break</span>
+      </Link>
+
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Complete Registration</CardTitle>
+          <CardDescription>
+            Step 3: Set your password and personal information
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form method="post">
+            <FieldGroup className="space-y-4">
+              {/* Password Fields */}
+              <div>
+                <FieldLabel htmlFor="password">Password (8 digits)</FieldLabel>
+                <Input
+                  id="password"
                   name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <PasswordInput
-                          required
-                          inputMode="numeric"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  type="password"
+                  placeholder="********"
+                  pattern="[0-9]{8}"
+                  inputMode="numeric"
+                  maxLength={8}
+                  required
                 />
-                <FormField
-                  control={form.control}
+                <FieldDescription>
+                  Enter 8 digits for your password
+                </FieldDescription>
+              </div>
+
+              <div>
+                <FieldLabel htmlFor="confirmPassword">
+                  Confirm Password
+                </FieldLabel>
+                <Input
+                  id="confirmPassword"
                   name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
-                      <FormControl>
-                        <PasswordInput
-                          required
-                          inputMode="numeric"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  type="password"
+                  placeholder="********"
+                  pattern="[0-9]{8}"
+                  inputMode="numeric"
+                  maxLength={8}
+                  required
                 />
-                {actionData && (
-                  <div className="flex gap-2">
-                    <p className="text-xs text-red-400">{actionData?.error}</p>
-                    <Link
-                      to="/register"
-                      className="text-xs underline underline-offset-4"
-                    >
-                      Go back to register
-                    </Link>
-                  </div>
-                )}
-                {clientError && (
-                  <p className="text-xs text-red-400">{clientError}</p>
-                )}
-                <div className="grid gap-4">
-                  <Button
-                    type="submit"
-                    className="mt-4 w-full"
-                    // disabled={form.formState.isSubmitting}
-                    disabled={navigation.state === "submitting"}
-                  >
-                    {/* {form.formState.isSubmitting ? "Submitting..." : "Confirm"} */}
-                    {navigation.state === "submitting"
-                      ? "Submitting..."
-                      : "Confirm"}
-                  </Button>
+              </div>
+
+              {/* Personal Information */}
+              <div className="pt-4 border-t">
+                <h3 className="text-sm font-medium mb-3">
+                  Personal Information (Required)
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <Field>
+                    <FieldLabel htmlFor="firstName">First Name</FieldLabel>
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      placeholder="John"
+                      required
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="lastName">Last Name</FieldLabel>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      placeholder="Doe"
+                      required
+                    />
+                  </Field>
                 </div>
-              </form>
-            </Form>
-          </div>
-        </div>
-      </div>
+
+                <Field className="mb-4">
+                  <FieldLabel htmlFor="email">Email</FieldLabel>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="john@example.com"
+                    required
+                  />
+                </Field>
+
+                {/* Address Information */}
+                <Field className="mb-4">
+                  <FieldLabel htmlFor="address">Address</FieldLabel>
+                  <Input
+                    id="address"
+                    name="address"
+                    type="text"
+                    placeholder="Street address, apartment, suite, etc."
+                    required
+                  />
+                </Field>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Field>
+                    <FieldLabel htmlFor="city">City/Town</FieldLabel>
+                    <Input
+                      id="city"
+                      name="city"
+                      type="text"
+                      placeholder="Yangon"
+                      required
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="region">Region/State</FieldLabel>
+                    <Input
+                      id="region"
+                      name="region"
+                      type="text"
+                      placeholder="Yangon Region"
+                      required
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {actionData?.error && (
+                <div className="text-sm text-red-500 text-center">
+                  {actionData.error}
+                </div>
+              )}
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Account...
+                  </>
+                ) : (
+                  "Complete Registration"
+                )}
+              </Button>
+
+              <FieldDescription className="text-center">
+                Registering phone: 09{authStore.phone}
+              </FieldDescription>
+            </FieldGroup>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
+export default ConfirmPasswordPage;

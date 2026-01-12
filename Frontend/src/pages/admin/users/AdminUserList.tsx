@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
-import { User } from "../../../data/user";
+import { useQuery } from "@tanstack/react-query";
+import { adminUsersQuery } from "../../../api/query";
 
 function AdminUserList() {
+  const { data: users = [] } = useQuery(adminUsersQuery());
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Users</h1>
@@ -12,11 +15,12 @@ function AdminUserList() {
             <tr className="border-b">
               <th className="py-2 text-left">Name</th>
               <th className="text-left">Email</th>
-              <th className="text-left"> Action</th>
+              <th className="text-left">Action</th>
             </tr>
           </thead>
+
           <tbody>
-            {User.map((user) => (
+            {users.map((user) => (
               <tr key={user.id} className="border-b">
                 <td className="py-2">
                   {user.firstName} {user.lastName}
@@ -24,7 +28,7 @@ function AdminUserList() {
                 <td>{user.email}</td>
                 <td>
                   <Link
-                    to={`/admin/users/${user.id}`}
+                    to={`/admins/users/${user.id}`}
                     className="text-primary underline"
                   >
                     View

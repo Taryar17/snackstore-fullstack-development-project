@@ -18,78 +18,88 @@ import {
   AvatarImage,
 } from "../../components/ui/avatar";
 
-interface UserProps {
-  user: User[];
+interface AuthDropDownProps {
+  user?: User;
 }
-function AuthDropDown({ user }: UserProps) {
-  if (!user) {
-    return (
-      <Button size="sm" asChild>
-        <Link to="/signin">Sign In</Link>
-      </Button>
-    );
-  }
 
-  const initialName = `${user[1].firstName.charAt(0) ?? ""} ${
-    user[1].lastName.charAt(0) ?? ""
-  }`;
+function AuthDropDown({ user }: AuthDropDownProps) {
+  const initialName =
+    `${user!.firstName?.charAt(0) ?? ""}${
+      user!.lastName?.charAt(0) ?? ""
+    }`.trim() ||
+    user!.phone?.slice(-2) ||
+    "U";
+
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="secondary" className="size-8 rounded-full">
-            <Avatar>
-              <AvatarImage src={user[1].imageUrl} alt={user[1].username} />
-              <AvatarFallback>{initialName}</AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
-          <DropdownMenuLabel>
-            <div className="flex flex-col space-y-1 items-start">
-              <p className="text-sm font-medium leading-none">
-                {user[1].firstName} {user[1].lastName}
-              </p>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="secondary" className="size-8 rounded-full" size="icon">
+          <Avatar className="h-8 w-8">
+            {user!.image ? (
+              <AvatarImage
+                src={user!.image}
+                alt={user!.firstName || user!.phone}
+              />
+            ) : null}
+            <AvatarFallback>{initialName}</AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel>
+          <div className="flex flex-col space-y-1 items-start">
+            <p className="text-sm font-medium leading-none">
+              {user!.firstName && user!.lastName
+                ? `${user!.firstName} ${user!.lastName}`
+                : user!.phone
+                ? `09${user!.phone}`
+                : "User"}
+            </p>
+            {user!.email && (
               <p className="text-sm leading-none text-muted-foreground">
-                {user[1].email}
+                {user!.email}
               </p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuGroup>
+            )}
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem asChild>
+            {user!.role === "ADMIN" ? (
+              <Link to="/admins" className="w-full cursor-pointer">
+                <Icons.dashboard className="size-4 mr-2" />
+                Dashboard
+                <DropdownMenuShortcut>⇧⌘D</DropdownMenuShortcut>
+              </Link>
+            ) : (
+              <Link to="/profile" className="w-full cursor-pointer">
+                <Icons.user className="size-4 mr-2" />
+                Profile
+                <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+              </Link>
+            )}
+          </DropdownMenuItem>
+
+          {user!.role === "USER" && (
             <DropdownMenuItem asChild>
-              {user[1].role === "ADMIN" ? (
-                <Link to="/admin">
-                  <Icons.dashboard className="size-4 mr-2" />
-                  Dashboard
-                  <DropdownMenuShortcut>⇧⌘D</DropdownMenuShortcut>
-                </Link>
-              ) : (
-                <Link to="/profile">
-                  <Icons.dashboard className="size-4 mr-2" />
-                  Profile
-                  <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                </Link>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="#">
-                <Icons.gear className="size-4 mr-2" />
-                Setting
-                <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut>
+              <Link to="/profile/orders" className="w-full cursor-pointer">
+                <Icons.package className="size-4 mr-2" />
+                My Orders
               </Link>
             </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Form method="POST" action="/logout">
-              <Button type="submit" className="w-full">
-                Logout
-              </Button>
-            </Form>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+          )}
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+          <Form method="POST" action="/logout" className="w-full">
+            <button type="submit" className="w-full text-left">
+              <Icons.logout className="size-4 mr-2" />
+              Log out
+            </button>
+          </Form>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

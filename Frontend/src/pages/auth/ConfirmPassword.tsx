@@ -1,4 +1,4 @@
-import { ConfirmPasswordForm } from "../../components/auth/ConfirmPasswordForm";
+import ConfirmPasswordForm from "../../components/auth/ConfirmPasswordForm";
 
 export default function SignUpPage() {
   return (

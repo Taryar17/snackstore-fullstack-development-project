@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Snack from "../data/images/snacks.png";
 import { Button } from "../components/ui/button";
 import CarouselPlugin from "../components/products/CarouselCard";
@@ -6,14 +6,22 @@ import PreviewProduct from "../components/products/PreviewProduct";
 import ProductCard from "../components/products/ProductCard";
 import { FieldSeparator } from "../components/ui/field";
 import type { Product } from "../types";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { productQuery } from "../api/query";
 
 function Home() {
-  const { productsData } = useLoaderData();
+  const { data: orderProductsData } = useSuspenseQuery(
+    productQuery("?limit=8&pstatus=ORDER")
+  );
+  const { data: allProductsData } = useSuspenseQuery(productQuery("?limit=8"));
+  const { data: preorderProductsData } = useSuspenseQuery(
+    productQuery("?limit=8&pstatus=PREORDER")
+  );
+
   return (
     <>
       <div className="container mx-auto">
         <div className="flex flex-col lg:flex-row lg:justify-between">
-          {/* Text Section */}
           <div className="my-8 text-center lg:mt-16 lg:mb-0 lg:w-2/5 lg:text-left">
             <h1 className="mb-4 text-4xl font-extrabold text-[#3b5d50] lg:mb-8 lg:text-6xl">
               Welcome to Your Snack Paradise
@@ -52,19 +60,35 @@ function Home() {
         </div>
         <hr />
         <h1 className="mt-4 mb-4 text-xl font-extrabold text-amber-800 lg:mb-8 lg:text-2xl">
-          Best Sellers
+          Our Products
         </h1>
-        <CarouselPlugin products={productsData.products} />
+        {allProductsData && (
+          <CarouselPlugin products={allProductsData.products} />
+        )}
         <FieldSeparator />
         <PreviewProduct
-          title="Featured Products"
+          title="Featured Products (In-Stock)"
           href="/products"
           sideText="View All Products"
         />
 
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-6 px-4 md:px-0">
+          {orderProductsData &&
+            orderProductsData.products
+              .slice(0, 6)
+              .map((product: Product) => (
+                <ProductCard product={product} key={product.id} />
+              ))}
+        </div>
+        <PreviewProduct
+          title="Featured Products (Pre-order)"
+          href="/preorders"
+          sideText="View All Products"
+        />
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-4 lg:grid-cols-6 px-4 mb-4 md:px-0">
-          {productsData &&
-            productsData.products
+          {preorderProductsData &&
+            preorderProductsData.products
               .slice(0, 6)
               .map((product: Product) => (
                 <ProductCard product={product} key={product.id} />

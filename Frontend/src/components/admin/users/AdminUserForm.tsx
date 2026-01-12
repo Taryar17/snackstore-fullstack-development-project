@@ -1,53 +1,90 @@
-import { useParams } from "react-router-dom";
-import type { User } from "../../../types";
+import { Form } from "react-router-dom";
 
-interface UserProps {
-  users: User[];
-}
+const imageUrl = import.meta.env.VITE_IMG_URL;
 
-function AdminUserForm({ users }: UserProps) {
-  const { userId } = useParams();
-  const user = users.find((user) => user.id == userId);
+function AdminUserForm({ user }: any) {
   return (
-    <form className="space-y-4 rounded-lg border bg-background p-6">
-      <div className="flex flex-col justify-between space-y-2">
-        <label className="text-sm font-medium">Name</label>
-        <label className="mt-1 w-full rounded border px-3 py-2 text-muted-foreground">
-          {user?.firstName} {user?.lastName}
-        </label>
+    <Form method="post" className="space-y-6 rounded-lg border p-6">
+      {/* Avatar + Name */}
+      <div className="flex items-center gap-4">
+        <div className="h-24 w-24 overflow-hidden rounded-full border bg-muted">
+          <img
+            src={user.image ? imageUrl + user.image : "/avatar-placeholder.png"}
+            alt={`${user.firstName} ${user.lastName}`}
+            className="h-full w-full object-cover"
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Name</label>
+          <p className="mt-1 rounded border px-3 py-2">
+            {user.firstName} {user.lastName}
+          </p>
+        </div>
       </div>
-      <div className="flex flex-col justify-between space-y-2">
+
+      {/* Email */}
+      <div>
         <label className="text-sm font-medium">Email</label>
-        <label className="mt-1 w-full rounded border px-3 py-2 text-muted-foreground">
-          {user?.email}
-        </label>
+        <p className="mt-1 rounded border px-3 py-2">{user.email}</p>
       </div>
-      <div className="flex flex-col justify-between space-y-2">
-        <label className="text-sm font-medium">Phone Number</label>
-        <label className="mt-1 w-full rounded border px-3 py-2 text-muted-foreground">
-          {user?.phone}
-        </label>
+
+      {/* Phone */}
+      <div>
+        <label className="text-sm font-medium">Phone</label>
+        <p className="mt-1 rounded border px-3 py-2">{user.phone}</p>
       </div>
+
+      {/* Address */}
+      <div>
+        <label className="text-sm font-medium">Email</label>
+        <p className="mt-1 rounded border px-3 py-2">{user.address}</p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <label className="text-sm font-medium">City</label>
+          <p className="mt-1 rounded border px-3 py-2">{user.city}</p>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Region</label>
+          <p className="mt-1 rounded border px-3 py-2">{user.region}</p>
+        </div>
+      </div>
+
+      {/* Status */}
       <div>
         <label className="text-sm font-medium">Status</label>
-        <select className="mt-1 w-full rounded border px-3 py-2">
-          <option>ACTIVE</option>
-          <option>INACTIVE</option>
+        <select
+          name="status"
+          defaultValue={user.status}
+          className="mt-1 w-full rounded border px-3 py-2"
+        >
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="INACTIVE">INACTIVE</option>
+          <option value="FREEZE">FREEZE</option>
         </select>
       </div>
 
+      {/* Role */}
       <div>
         <label className="text-sm font-medium">Role</label>
-        <select className="mt-1 w-full rounded border px-3 py-2">
-          <option>User</option>
-          <option>Admin</option>
+        <select
+          name="role"
+          defaultValue={user.role}
+          className="mt-1 w-full rounded border px-3 py-2"
+        >
+          <option value="USER">User</option>
+          <option value="ADMIN">Admin</option>
         </select>
       </div>
 
+      {/* Submit */}
       <button className="rounded bg-primary px-4 py-2 text-white">
         Update User
       </button>
-    </form>
+    </Form>
   );
 }
 

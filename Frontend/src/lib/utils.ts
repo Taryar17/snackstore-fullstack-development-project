@@ -15,3 +15,16 @@ export function formatPrice(
     notation: opts.notation ?? "compact",
   }).format(Number(price));
 }
+
+export const formatDate = (
+  date: Date | string,
+  options: Intl.DateTimeFormatOptions = {}
+) => {
+  const d = new Date(date);
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    ...options,
+  });
+};

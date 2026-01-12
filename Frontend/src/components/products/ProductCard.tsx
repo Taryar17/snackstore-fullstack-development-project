@@ -13,13 +13,25 @@ import {
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import { formatPrice } from "../../lib/utils";
 import { cn } from "../../lib/utils";
+import { useCartStore } from "../../store/cartStore";
 
 interface ProductProps extends React.HtmlHTMLAttributes<HTMLDivElement> {
   product: Product;
 }
+const imageURL = import.meta.env.VITE_IMG_URL;
 
 function ProductCard({ product, className }: ProductProps) {
-  const imageURL = import.meta.env.VITE_IMG_URL;
+  const { carts, addItem } = useCartStore();
+  const cartItem = carts.find((item) => item.id === product.id);
+  const handleAddToCart = () => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0].path,
+      quantity: 1,
+    });
+  };
   return (
     <Card className={cn("size-full overflow-hidden rounded-lg", className)}>
       <Link to={`/products/${product.id}`} aria-label={product.name}>
@@ -62,8 +74,11 @@ function ProductCard({ product, className }: ProductProps) {
           <Button
             size="sm"
             className="h-8 w-full rounded-sm bg-orange-500 font-bold"
+            onClick={handleAddToCart}
+            disabled={!!cartItem}
           >
-            <Icons.plus />
+            {!cartItem && <Icons.plus />}
+            {!cartItem ? "Add to Cart" : "Added Item"}
           </Button>
         )}
       </CardFooter>
