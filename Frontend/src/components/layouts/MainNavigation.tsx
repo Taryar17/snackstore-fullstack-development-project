@@ -8,8 +8,6 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "../ui/navigation-menu";
-// import { cn } from "../../../lib/utils";
-// import { cva } from "class-variance-authority";
 import { Icons } from "../icons";
 import { siteConfig } from "../../config/site";
 import type { MainNavItem } from "../../types";
@@ -61,23 +59,6 @@ function MainNavigation({ items }: MainNavigationProps) {
               </NavigationMenuContent>
             </NavigationMenuItem>
           )}
-
-          {/* <NavigationMenuItem>
-            <NavigationMenuTrigger>Components</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid gap-2 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                {components.map((component) => (
-                  <ListItem
-                    key={component.title}
-                    title={component.title}
-                    href={component.href}
-                  >
-                    {component.description}
-                  </ListItem>
-                ))}
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem> */}
           {items?.[0]?.menu &&
             items[0].menu.map((item) => (
               <NavigationMenuItem key={item.title}>

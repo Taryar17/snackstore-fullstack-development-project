@@ -28,13 +28,7 @@ interface ProductFilterProps {
 
 const FormSchema = z.object({
   categories: z.array(z.string()),
-  // .refine((value) => value.some((item) => item), {
-  //   message: "You have to select at least one categories.",
-  // }),
   types: z.array(z.string()),
-  // .refine((value) => value.some((item) => item), {
-  //   message: "You have to select at least one types.",
-  // }),
 });
 
 export default function ProductFilter({

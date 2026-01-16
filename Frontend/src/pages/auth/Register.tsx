@@ -9,7 +9,7 @@ function Register() {
         className="text-foreground/80 hover:text-foreground fixed top-6 left-8 flex items-center text-lg font-bold tracking-tight transition-colors"
       >
         <Icons.logo className="mr-2 size-6" aria-hidden="true" />
-        <span>Furniture Shop</span>
+        <span>Snack Shop</span>
       </Link>
       <RegisterForm />
     </div>

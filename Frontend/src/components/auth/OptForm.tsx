@@ -117,10 +117,8 @@ export function OtpForm({
                 <Button
                   type="submit"
                   className="mt-2 w-full"
-                  // disabled={form.formState.isSubmitting}
                   disabled={navigation.state === "submitting"}
                 >
-                  {/* {form.formState.isSubmitting ? "Submitting..." : "Verify"} */}
                   {navigation.state === "submitting"
                     ? "Submitting..."
                     : "Verify"}

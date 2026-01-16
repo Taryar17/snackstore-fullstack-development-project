@@ -18,7 +18,7 @@ function AdminTypeList() {
         <h1 className="text-2xl font-semibold">Types</h1>
 
         <Button asChild>
-          <Link to="/admin/types/new">Add Type</Link>
+          <Link to="/admins/types/new">Add Type</Link>
         </Button>
       </div>
 
@@ -78,7 +78,7 @@ const TypeItem = ({
       <div className="mt-3 flex items-center justify-between">
         <div className="flex gap-2">
           <Button asChild size="sm" variant="outline">
-            <Link to={`/admin/types/${type.id}`}>View</Link>
+            <Link to={`/admins/types/${type.id}`}>View</Link>
           </Button>
 
           <Button

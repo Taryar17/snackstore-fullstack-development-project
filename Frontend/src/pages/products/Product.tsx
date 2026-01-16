@@ -16,6 +16,7 @@ function Product() {
 
   const rawCategory = searchParams.get("categories");
   const rawType = searchParams.get("types");
+  const pstatus = searchParams.get("pstatus") || "ORDER";
 
   // Decode & parse search params
   const selectedCategory = rawCategory
@@ -44,13 +45,10 @@ function Product() {
     error,
     isFetching,
     isFetchingNextPage,
-    // isFetchingPreviousPage,
     fetchNextPage,
-    // fetchPreviousPage,
     hasNextPage,
-    // hasPreviousPage,
     refetch,
-  } = useInfiniteQuery(productInfiniteQuery(cat, typ));
+  } = useInfiniteQuery(productInfiniteQuery(cat, typ, pstatus));
 
   const allProducts = data?.pages.flatMap((page) => page.products) ?? [];
 
@@ -60,6 +58,11 @@ function Product() {
       newParams.set("categories", encodeURIComponent(categories.join(",")));
     if (types.length > 0)
       newParams.set("types", encodeURIComponent(types.join(",")));
+
+    // Preserve pstatus parameter
+    if (pstatus) {
+      newParams.set("pstatus", pstatus);
+    }
 
     // Updates URL & triggers refetch via query key
     setSearchParams(newParams);
@@ -86,13 +89,27 @@ function Product() {
           />
         </section>
         <section className="w-full lg:ml-0 lg:w-4/5">
-          <h1 className="my-8 ml-4 text-2xl font-bold">All Products</h1>
+          <div className="flex items-center justify-between my-8 ml-4">
+            <h1 className="text-2xl font-bold">
+              {pstatus === "ORDER" ? "In-Stock Products" : "Pre-order Products"}
+            </h1>
+            {pstatus === "ORDER" ? (
+              <Button asChild variant="outline" className="rounded-full">
+                <a href="/preorders?pstatus=PREORDER">
+                  View Pre-order Products
+                </a>
+              </Button>
+            ) : (
+              <Button asChild variant="outline" className="rounded-full">
+                <a href="/products?pstatus=ORDER">View In-Stock Products</a>
+              </Button>
+            )}
+          </div>
           <div className="mb-12 grid grid-cols-1 gap-6 gap-y-12 px-4 md:grid-cols-2 md:px-0 lg:grid-cols-3">
             {allProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
-          {/* <Pagination /> */}
           <div className="my-4 flex justify-center">
             <Button
               onClick={() => fetchNextPage()}

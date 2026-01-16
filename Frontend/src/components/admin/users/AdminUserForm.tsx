@@ -37,7 +37,7 @@ function AdminUserForm({ user }: any) {
 
       {/* Address */}
       <div>
-        <label className="text-sm font-medium">Email</label>
+        <label className="text-sm font-medium">Address</label>
         <p className="mt-1 rounded border px-3 py-2">{user.address}</p>
       </div>
 

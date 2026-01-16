@@ -45,8 +45,6 @@ export function NewPasswordForm({
 
   const [clientError, setClientError] = useState<string | null>(null);
 
-  // const isSubmitting = navigation.state === "submitting";
-
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {

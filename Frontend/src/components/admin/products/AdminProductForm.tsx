@@ -347,7 +347,7 @@ function AdminProductForm({ product, isEditing = false }: ProductFormProps) {
           disabled={isSubmitting}
           asChild
         >
-          <a href="/admin/products">Cancel</a>
+          <a href="/admins/products">Cancel</a>
         </Button>
       </div>
     </Form>

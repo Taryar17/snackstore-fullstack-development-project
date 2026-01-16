@@ -1,8 +1,10 @@
-// AddToFavourite.tsx - Using PATCH method
-import { useFetcher } from "react-router-dom";
+// Alternative AddToFavourite.tsx using direct API
+import { useState } from "react";
 import { Button } from "../../components/ui/button";
 import { cn } from "../../lib/utils";
 import { Icons } from "../../components/icons";
+import api from "../../api";
+import { toast } from "sonner";
 
 interface FavouriteProp extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   productId: string;
@@ -12,37 +14,60 @@ interface FavouriteProp extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 function AddToFavourite({
   productId,
-  isFavourite,
+  isFavourite: initialIsFavourite,
   className,
   ...props
 }: FavouriteProp) {
-  const fetcher = useFetcher({ key: `product:${productId}` });
+  const [isFavourite, setIsFavourite] = useState(initialIsFavourite);
+  const [isLoading, setIsLoading] = useState(false);
 
-  let favourite = isFavourite;
-  if (fetcher.formData) {
-    favourite = fetcher.formData.get("favourite") === "true";
-  }
+  const handleToggleFavourite = async () => {
+    if (isLoading) return;
+
+    setIsLoading(true);
+    try {
+      const newFavouriteState = !isFavourite;
+
+      await api.patch("users/products/toggle-favourite", {
+        productId: Number(productId),
+        favourite: newFavouriteState,
+      });
+
+      setIsFavourite(newFavouriteState);
+      toast.success(
+        newFavouriteState ? "Added to favourites" : "Removed from favourites"
+      );
+    } catch (error: any) {
+      console.error("Failed to toggle favourite:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to update favourite"
+      );
+      // Revert on error
+      setIsFavourite(isFavourite);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <fetcher.Form method="patch">
-      {" "}
-      {/* Changed to PATCH */}
-      <Button
-        variant="secondary"
-        size="icon"
-        className={cn("size-8 shrink-0", className)}
-        name="favourite"
-        value={favourite ? "false" : "true"}
-        title={favourite ? "Remove from favourites" : "Add to favourites"}
-        {...props}
-      >
-        {favourite ? (
-          <Icons.heartFill className="size-4 text-red-500" />
-        ) : (
-          <Icons.heart className="size-4 text-red-500" />
-        )}
-      </Button>
-    </fetcher.Form>
+    <Button
+      type="button"
+      variant="secondary"
+      size="icon"
+      className={cn("size-8 shrink-0", className)}
+      onClick={handleToggleFavourite}
+      disabled={isLoading}
+      title={isFavourite ? "Remove from favourites" : "Add to favourites"}
+      {...props}
+    >
+      {isLoading ? (
+        <Icons.spinner className="size-4 animate-spin" />
+      ) : isFavourite ? (
+        <Icons.heartFill className="size-4 text-red-500" />
+      ) : (
+        <Icons.heart className="size-4 text-red-500" />
+      )}
+    </Button>
   );
 }
 

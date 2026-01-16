@@ -13,6 +13,17 @@ function ProfileOrderDetail() {
   const { order } = useLoaderData();
   const navigate = useNavigate();
 
+  const formatOrderDate = (dateString: string | null) => {
+    if (!dateString) return "Not set";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PENDING":
@@ -45,7 +56,7 @@ function ProfileOrderDetail() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - Order Items */}
+        {/*Order Items */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardContent className="p-6">
@@ -86,9 +97,37 @@ function ProfileOrderDetail() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="mb-4 text-lg font-semibold">
+                Delivery Information
+              </h2>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">
+                      Estimated Delivery
+                    </span>
+                    {order.estimatedDeliveryDate ? (
+                      <Badge className="bg-green-100 text-green-800">
+                        {formatOrderDate(order.estimatedDeliveryDate)}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Awaiting confirmation</Badge>
+                    )}
+                  </div>
+                  {!order.estimatedDeliveryDate && (
+                    <p className="text-xs text-muted-foreground">
+                      Our team will confirm delivery date within 24 hours
+                    </p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Right Column - Order Summary */}
+        {/*Order Summary */}
         <div className="space-y-6">
           <Card>
             <CardContent className="p-6">

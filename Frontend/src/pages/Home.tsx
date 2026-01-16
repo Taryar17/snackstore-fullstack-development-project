@@ -7,7 +7,7 @@ import ProductCard from "../components/products/ProductCard";
 import { FieldSeparator } from "../components/ui/field";
 import type { Product } from "../types";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { productQuery } from "../api/query";
+import { preorderProductQuery, productQuery } from "../api/query";
 
 function Home() {
   const { data: orderProductsData } = useSuspenseQuery(
@@ -15,7 +15,7 @@ function Home() {
   );
   const { data: allProductsData } = useSuspenseQuery(productQuery("?limit=8"));
   const { data: preorderProductsData } = useSuspenseQuery(
-    productQuery("?limit=8&pstatus=PREORDER")
+    preorderProductQuery("?limit=8&pstatus=PREORDER")
   );
 
   return (
@@ -68,7 +68,7 @@ function Home() {
         <FieldSeparator />
         <PreviewProduct
           title="Featured Products (In-Stock)"
-          href="/products"
+          href="/products?pstatus=ORDER"
           sideText="View All Products"
         />
 

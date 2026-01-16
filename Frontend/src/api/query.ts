@@ -4,8 +4,11 @@ import api from ".";
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 min
-      // retry: 2,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     },
   },
 });
@@ -16,6 +19,14 @@ const fetchProducts = (q?: string) =>
 export const productQuery = (q?: string) => ({
   queryKey: ["products", q],
   queryFn: () => fetchProducts(q),
+});
+
+const fetchPreorderProducts = (q?: string) =>
+  api.get(`users/preorder-products${q ?? ""}`).then((res) => res.data);
+
+export const preorderProductQuery = (q?: string) => ({
+  queryKey: ["preorder-products", q],
+  queryFn: () => fetchPreorderProducts(q),
 });
 
 const fetchCategoryType = async () =>
@@ -30,74 +41,82 @@ const fetchInfiniteProducts = async ({
   pageParam = null,
   categories = null,
   types = null,
+  pstatus = "ORDER",
 }: {
   pageParam?: number | null;
   categories?: string | null;
   types?: string | null;
+  pstatus?: string | null;
 }) => {
   let query = pageParam ? `?limit=9&cursor=${pageParam}` : "?limit=9";
   if (categories) query += `&category=${categories}`;
   if (types) query += `&type=${types}`;
+  if (pstatus) query += `&pstatus=${pstatus}`;
+
   const response = await api.get(`users/products${query}`);
   return response.data;
 };
 
 export const productInfiniteQuery = (
   categories: string | null = null,
-  types: string | null = null
+  types: string | null = null,
+  pstatus: string | null = "ORDER"
 ) => ({
   queryKey: [
     "products",
     "infinite",
     categories ?? undefined,
     types ?? undefined,
+    pstatus ?? undefined,
   ],
   queryFn: ({ pageParam }: { pageParam?: number | null }) =>
-    fetchInfiniteProducts({ pageParam, categories, types }),
+    fetchInfiniteProducts({ pageParam, categories, types, pstatus }),
   placeholderData: keepPreviousData,
-  initialPageParam: null, // Start with no cursor
+  initialPageParam: null,
   getNextPageParam: (lastPage, pages) => lastPage.nextCursor ?? undefined,
-  // getPreviousPageParam: (firstPage, pages) => firstPage.prevCursor ?? undefined,
-  // maxPages: 7,
 });
 
 const fetchInfinitePreorderProducts = async ({
   pageParam = null,
   categories = null,
   types = null,
+  pstatus = "PREORDER",
 }: {
   pageParam?: number | null;
   categories?: string | null;
   types?: string | null;
+  pstatus?: string | null;
 }) => {
   let query = pageParam ? `?limit=9&cursor=${pageParam}` : "?limit=9";
   if (categories) query += `&category=${categories}`;
   if (types) query += `&type=${types}`;
+  if (pstatus) query += `&pstatus=${pstatus}`;
+
   const response = await api.get(`users/preorder-products${query}`);
   return response.data;
 };
 
 export const preorderProductInfiniteQuery = (
   categories: string | null = null,
-  types: string | null = null
+  types: string | null = null,
+  pstatus: string | null = "PREORDER"
 ) => ({
   queryKey: [
     "preorder-products",
     "infinite",
     categories ?? undefined,
     types ?? undefined,
+    pstatus ?? undefined,
   ],
   queryFn: ({ pageParam }: { pageParam?: number | null }) =>
-    fetchInfinitePreorderProducts({ pageParam, categories, types }),
+    fetchInfinitePreorderProducts({ pageParam, categories, types, pstatus }),
   placeholderData: keepPreviousData,
-  initialPageParam: null, // Start with no cursor
+  initialPageParam: null,
   getNextPageParam: (lastPage, pages) => lastPage.nextCursor ?? undefined,
-  // getPreviousPageParam: (firstPage, pages) => firstPage.prevCursor ?? undefined,
-  // maxPages: 7,
 });
-
-const fetchOneProduct = async (id: number) => {
-  const product = await api.get(`users/products/${id}`);
+const fetchOneProduct = async (id: number | string) => {
+  const productId = typeof id === "string" ? parseInt(id, 10) : id;
+  const product = await api.get(`users/products/${productId}`);
   if (!product) {
     throw new Response("", {
       status: 404,
@@ -107,7 +126,7 @@ const fetchOneProduct = async (id: number) => {
   return product.data;
 };
 
-export const oneProductQuery = (id: number) => ({
+export const oneProductQuery = (id: number | string) => ({
   queryKey: ["products", "detail", id],
   queryFn: () => fetchOneProduct(id),
 });
@@ -247,4 +266,63 @@ export const userOrdersQuery = (page = 1) => ({
 export const updateProfileMutation = () => ({
   mutationFn: (data: any) =>
     api.put("/users/profile", data).then((res) => res.data),
+});
+
+const fetchCart = async () => {
+  const response = await api.get("/cart");
+  return response.data;
+};
+
+export const cartQuery = () => ({
+  queryKey: ["cart"],
+  queryFn: fetchCart,
+  staleTime: 1000 * 60 * 5, // 5 minutes
+  retry: 1,
+});
+
+const fetchProductWithStock = async (id: string | number) => {
+  const productId = typeof id === "string" ? parseInt(id, 10) : id;
+
+  const response = await api.get(`users/products/${productId}`);
+  const product = response.data.product;
+
+  // Calculate available stock
+  return {
+    ...product,
+    available: (product.inventory || 0) - (product.reserved || 0),
+  };
+};
+export const productWithStockQuery = (id: string | number) => ({
+  queryKey: ["product-stock", id],
+  queryFn: () => fetchProductWithStock(id),
+});
+
+export const fetchProductStock = async (productId: number) => {
+  try {
+    const response = await api.get(`users/products/${productId}/stock`);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch stock for product ${productId}:`, error);
+    throw error;
+  }
+};
+
+export const productStockQuery = (productId: number) => ({
+  queryKey: ["products", "stock", productId],
+  queryFn: () => fetchProductStock(productId),
+  staleTime: 30000,
+  cacheTime: 60000,
+  refetchOnMount: "always",
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
+});
+
+export const productStockFallbackQuery = (productId: number) => ({
+  queryKey: ["products", "stock-fallback", productId],
+  queryFn: () => fetchProductStock(productId),
+  staleTime: 60000,
+  cacheTime: 120000,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+  enabled: false,
 });

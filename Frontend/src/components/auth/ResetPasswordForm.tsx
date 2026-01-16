@@ -37,8 +37,6 @@ export function ResetPasswordForm({
   const navigation = useNavigation();
   const actionData = useActionData() as { error?: string } | undefined;
 
-  // const isSubmitting = navigation.state === "submitting";
-
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -58,7 +56,6 @@ export function ResetPasswordForm({
             <div className="flex h-8 w-8 items-center justify-center rounded-md">
               <Icons.logo className="mr-2 h-6 w-6" aria-hidden="true" />
             </div>
-            <span className="sr-only">Furniture Shop</span>
           </Link>
           <h1 className="text-xl font-bold">Reset Password</h1>
           <div className="text-center text-sm">

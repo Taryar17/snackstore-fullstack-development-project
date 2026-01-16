@@ -1,7 +1,7 @@
 // pages/admin/dashboard/AdminDashboard.tsx
 import { useSuspenseQuery } from "@tanstack/react-query";
 import StatCard from "../../../components/admin/dashboard/StatCard";
-
+import DeliveryStats from "../../../components/admin/dashboard/DeliveryStats";
 import { Icons } from "../../../components/icons";
 import { DashboardQuery } from "../../../api/query";
 
@@ -47,6 +47,13 @@ function AdminDashboard() {
           icon={Icons.user}
         />
       </div>
+
+      {/* Delivery Stats - FIXED: Use stats directly, not deliveryStats */}
+      <DeliveryStats
+        ordersNeedingDeliveryDate={stats.ordersNeedingDeliveryDate || 0}
+        upcomingDeliveries={stats.upcomingDeliveries || 0}
+        todaysDeliveries={stats.todaysDeliveries || 0}
+      />
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

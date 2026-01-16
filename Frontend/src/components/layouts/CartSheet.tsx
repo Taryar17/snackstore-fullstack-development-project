@@ -21,7 +21,10 @@ import { useCartStore } from "../../store/cartStore";
 function CartSheet() {
   const itemCount = useCartStore((state) => state.getTotalItems());
   const amountTotal = useCartStore((state) => state.getTotalPrice());
-  const { carts } = useCartStore();
+  const { carts, sessionId } = useCartStore();
+  const checkoutLink = sessionId
+    ? `/checkout?session=${sessionId}`
+    : "/checkout";
 
   return (
     <Sheet>
@@ -78,7 +81,7 @@ function CartSheet() {
               <SheetFooter>
                 <SheetClose asChild>
                   <Button type="submit" asChild className="w-full">
-                    <Link to="/checkout" aria-label="Check out">
+                    <Link to={checkoutLink} aria-label="Check out">
                       Continue to checkout
                     </Link>
                   </Button>

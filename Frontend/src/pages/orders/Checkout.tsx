@@ -29,7 +29,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "../../api";
 import { useToast } from "../../hook/use-toast";
 
-// Simple schema - just user info confirmation
 const checkoutSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -80,10 +79,26 @@ function CheckoutPage() {
     onSuccess: (data) => {
       clearCart();
       setIsSubmitting(false);
+      const { syncCartWithServer } = useCartStore.getState();
+      syncCartWithServer();
 
       toast({
-        title: "Order Placed!",
-        description: `Your order #${data.orderCode} has been placed successfully.`,
+        title: "Order Placed Successfully!",
+        description: (
+          <div className="space-y-2">
+            <p>Order #{data.orderCode} has been placed.</p>
+            <p className="text-sm text-muted-foreground">
+              {data.estimatedDeliveryDate
+                ? `Estimated delivery: ${new Date(
+                    data.estimatedDeliveryDate
+                  ).toLocaleDateString()}`
+                : "Delivery date will be confirmed by admin soon."}
+            </p>
+            <p className="text-sm">
+              You will receive confirmation on your phone.
+            </p>
+          </div>
+        ),
       });
 
       // Navigate to home page after 2 seconds
@@ -105,6 +120,7 @@ function CheckoutPage() {
   const onSubmit = async (data: CheckoutFormData) => {
     setIsSubmitting(true);
 
+    const { sessionId } = useCartStore.getState();
     // Prepare order items from cart
     const orderItems = carts.map((item) => ({
       productId: item.id,
@@ -115,6 +131,7 @@ function CheckoutPage() {
     const orderPayload = {
       items: orderItems,
       totalPrice: getTotalPrice(),
+      cartSessionId: sessionId,
     };
 
     createOrderMutation.mutate(orderPayload);
@@ -155,7 +172,7 @@ function CheckoutPage() {
       <h1 className="mb-8 text-3xl font-bold text-[#3b5d50]">Checkout</h1>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left Column - User Info Form */}
+        {/*User Info Form */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
@@ -165,6 +182,22 @@ function CheckoutPage() {
               </p>
             </CardHeader>
             <CardContent>
+              <Card className="mb-6 bg-blue-50 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <Icons.truck className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="space-y-1">
+                      <h3 className="font-medium text-blue-800">
+                        Delivery Information
+                      </h3>
+                      <p className="text-sm text-blue-700">
+                        Your delivery date will be confirmed by our team within
+                        24 hours. We'll notify you via SMS once confirmed.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -253,7 +286,7 @@ function CheckoutPage() {
           </Card>
         </div>
 
-        {/* Right Column - Order Summary */}
+        {/*Order Summary */}
         <div>
           <Card>
             <CardHeader>

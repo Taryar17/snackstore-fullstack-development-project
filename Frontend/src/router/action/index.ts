@@ -271,7 +271,6 @@ export const productDetailAction = async ({
   const formData = await request.formData();
   const actionType = formData.get("_action");
 
-  // Handle review creation
   if (actionType === "createReview") {
     const payload = {
       productId: Number(formData.get("productId")),
@@ -286,7 +285,6 @@ export const productDetailAction = async ({
         queryKey: ["reviews", "product", payload.productId],
       });
 
-      // Also invalidate product details to update rating
       await queryClient.invalidateQueries({
         queryKey: ["products", "detail", params.productId],
       });
@@ -300,7 +298,6 @@ export const productDetailAction = async ({
     }
   }
 
-  // Handle favorite toggle
   if (actionType === "toggleFavorite") {
     if (!params.productId) {
       throw new Error("No Product ID provided");
@@ -329,10 +326,37 @@ export const productDetailAction = async ({
     }
   }
 
-  // Fallback - if no action specified, check for rating field
+  if (formData.has("favourite")) {
+    const productId = formData.get("productId") || params.productId;
+    if (!productId) {
+      throw new Error("No Product ID provided");
+    }
+
+    const data = {
+      productId: Number(productId),
+      favourite: formData.get("favourite") === "true",
+    };
+
+    try {
+      await api.patch("users/products/toggle-favourite", data);
+
+      await queryClient.invalidateQueries({
+        queryKey: ["products", "detail", params.productId || data.productId],
+      });
+
+      return null;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (error.response) {
+          return { error: error.response.data.message };
+        }
+      }
+      throw error;
+    }
+  }
+
   const hasRating = formData.has("rating");
   if (hasRating) {
-    // Handle as review
     const payload = {
       productId: Number(formData.get("productId")),
       rating: Number(formData.get("rating")),
@@ -357,34 +381,9 @@ export const productDetailAction = async ({
       }
       throw error;
     }
-  } else {
-    // Handle as favorite
-    if (!params.productId) {
-      throw new Error("No Product ID provided");
-    }
-
-    const data = {
-      productId: Number(params.productId),
-      favourite: formData.get("favourite") === "true",
-    };
-
-    try {
-      await api.patch("users/products/toggle-favourite", data);
-
-      await queryClient.invalidateQueries({
-        queryKey: ["products", "detail", params.productId],
-      });
-
-      return null;
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        if (error.response) {
-          return { error: error.response.data.message };
-        }
-      }
-      throw error;
-    }
   }
+
+  return null;
 };
 
 export const changeReviewStatusAction = async ({
@@ -452,7 +451,6 @@ export const updateCategoryAction = async ({
   const name = formData.get("name");
 
   try {
-    // Use PATCH method for update
     await api.patch(`admins/categories/${params.categoryId}`, { name });
 
     await queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
@@ -596,7 +594,6 @@ export const createProductAction = async ({ request }: ActionFunctionArgs) => {
       uploadData.append("tags", tags);
     }
 
-    // Append image files
     imageFiles.forEach((file) => {
       if (file.size > 0) {
         uploadData.append("images", file);
@@ -734,5 +731,5 @@ export const updateAdminUserAction = async ({
     queryKey: ["admin", "users", payload.id],
   });
 
-  return redirect("/admin/users");
+  return redirect("/admins/users");
 };

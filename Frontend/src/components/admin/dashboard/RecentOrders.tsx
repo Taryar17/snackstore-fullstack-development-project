@@ -1,7 +1,7 @@
-// components/admin/dashboard/RecentOrders.tsx
 import { Link } from "react-router-dom";
 import { Button } from "../../../components/ui/button";
 import { formatPrice } from "../../../lib/utils";
+import { Icons } from "../../../components/icons";
 
 interface Order {
   id: number;
@@ -11,6 +11,7 @@ interface Order {
   total: number;
   createdAt: string;
   itemsCount: number;
+  estimatedDeliveryDate?: string | null;
 }
 
 interface RecentOrdersProps {
@@ -38,8 +39,15 @@ function RecentOrders({ orders }: RecentOrdersProps) {
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    });
+  };
+
+  const formatDeliveryDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "Not set";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -57,10 +65,10 @@ function RecentOrders({ orders }: RecentOrdersProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b text-left">
-                <th className="py-2">Order Code</th>
+                <th className="py-2">Order</th>
                 <th>Customer</th>
-                <th>Items</th>
                 <th>Status</th>
+                <th>Delivery</th>
                 <th>Total</th>
                 <th>Date</th>
                 <th>Action</th>
@@ -78,7 +86,6 @@ function RecentOrders({ orders }: RecentOrdersProps) {
                     </Link>
                   </td>
                   <td className="py-3">{order.customerName}</td>
-                  <td className="py-3">{order.itemsCount} items</td>
                   <td className="py-3">
                     <span
                       className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getStatusBadgeClass(
@@ -88,6 +95,20 @@ function RecentOrders({ orders }: RecentOrdersProps) {
                       {order.status}
                     </span>
                   </td>
+                  <td className="py-3">
+                    {order.estimatedDeliveryDate ? (
+                      <div className="flex items-center gap-1">
+                        <Icons.calendar className="h-3 w-3 text-green-600" />
+                        <span className="text-xs">
+                          {formatDeliveryDate(order.estimatedDeliveryDate)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        Awaiting date
+                      </span>
+                    )}
+                  </td>
                   <td className="py-3 font-medium">
                     {formatPrice(order.total)}
                   </td>
@@ -96,7 +117,7 @@ function RecentOrders({ orders }: RecentOrdersProps) {
                   </td>
                   <td className="py-3">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link to={`/admins/orders/${order.id}`}>View</Link>
+                      <Link to={`/admins/orders/${order.id}`}>Manage</Link>
                     </Button>
                   </td>
                 </tr>

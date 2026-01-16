@@ -75,10 +75,10 @@ import AdminReviewList from "./pages/admin/reviews/AdminReviewList";
 import AdminCategoryCreate from "./pages/admin/categories/AdminCategoryCreate";
 import AdminTypeCreate from "./pages/admin/types/AdminTypeCreate";
 import AdminProductCreate from "./pages/admin/products/AdminProductCreate";
-import PreorderProductPage from "./pages/products/PreorderProductPage";
 import CheckoutPage from "./pages/orders/Checkout";
 import ProfileOrdersPage from "./pages/profile/ProfileOrdersPage";
 import ProfileOrderDetail from "./pages/profile/ProfileOrderDetail";
+import PreorderProduct from "./pages/products/PreorderProduct";
 
 const ProductRootLayout = lazy(
   () => import("./pages/products/ProductRootLayout")
@@ -164,20 +164,10 @@ export const router = createBrowserRouter([
         path: "preorders",
         element: (
           <Suspense fallback={<SuspenseFallback />}>
-            <ProductRootLayout />
+            <PreorderProduct />
           </Suspense>
         ),
-        children: [
-          {
-            index: true,
-            element: (
-              <Suspense fallback={<SuspenseFallback />}>
-                <PreorderProductPage />
-              </Suspense>
-            ),
-            loader: preorderProductInfiniteLoader,
-          },
-        ],
+        loader: preorderProductInfiniteLoader,
       },
       {
         path: "products/:productId",
@@ -304,7 +294,6 @@ export const router = createBrowserRouter([
             path: "new",
             element: (
               <Suspense fallback={<SuspenseFallback />}>
-                {/* Create your AdminCategoryCreate component */}
                 <AdminCategoryCreate />
               </Suspense>
             ),
@@ -339,7 +328,6 @@ export const router = createBrowserRouter([
             path: "new",
             element: (
               <Suspense fallback={<SuspenseFallback />}>
-                {/* Create your AdminTypeCreate component */}
                 <AdminTypeCreate />
               </Suspense>
             ),
@@ -358,8 +346,8 @@ export const router = createBrowserRouter([
                 <AdminProductList />
               </Suspense>
             ),
-            loader: adminProductListLoader, // Add this loader
-            action: deleteProductAction, // Add this action
+            loader: adminProductListLoader,
+            action: deleteProductAction,
           },
           {
             path: "new",
@@ -368,8 +356,8 @@ export const router = createBrowserRouter([
                 <AdminProductCreate />
               </Suspense>
             ),
-            loader: adminProductCreateLoader, // Add this loader
-            action: createProductAction, // Add this action
+            loader: adminProductCreateLoader,
+            action: createProductAction,
           },
           {
             path: ":productId",

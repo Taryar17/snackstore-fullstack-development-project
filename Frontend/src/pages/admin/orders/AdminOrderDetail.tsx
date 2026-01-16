@@ -1,4 +1,3 @@
-// pages/admin/orders/AdminOrderDetail.tsx
 import { useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { Button } from "../../../components/ui/button";
@@ -16,6 +15,8 @@ import {
 } from "../../../components/ui/select";
 import { useToast } from "../../../hook/use-toast";
 import api from "../../../api";
+import { Label } from "../../../components/ui/label";
+import { Input } from "../../../components/ui/input";
 
 const imageUrl = import.meta.env.VITE_IMG_URL;
 
@@ -26,6 +27,12 @@ function AdminOrderDetail() {
 
   const [status, setStatus] = useState(order.status);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [deliveryDate, setDeliveryDate] = useState(
+    order.estimatedDeliveryDate
+      ? new Date(order.estimatedDeliveryDate).toISOString().split("T")[0]
+      : ""
+  );
+  const [isSettingDelivery, setIsSettingDelivery] = useState(false);
 
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
@@ -42,6 +49,17 @@ function AdminOrderDetail() {
     }
   };
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "Not set";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   const handleUpdateStatus = async () => {
     if (status === order.status) {
       toast({
@@ -52,16 +70,12 @@ function AdminOrderDetail() {
     }
 
     setIsUpdating(true);
-
     try {
       await api.put(`/admins/orders/${order.id}/status`, { status });
-
       toast({
         title: "Status Updated",
         description: `Order status changed to ${status}`,
       });
-
-      // Refresh the page data
       window.location.reload();
     } catch (error) {
       toast({
@@ -73,6 +87,70 @@ function AdminOrderDetail() {
       setIsUpdating(false);
     }
   };
+
+  const handleSetDeliveryDate = async () => {
+    if (!deliveryDate) {
+      toast({
+        title: "Date required",
+        description: "Please select a delivery date",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedDate = new Date(deliveryDate);
+    if (selectedDate < new Date()) {
+      toast({
+        title: "Invalid date",
+        description: "Delivery date must be in the future",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSettingDelivery(true);
+    try {
+      await api.patch(`/admins/orders/${order.id}/delivery-date`, {
+        estimatedDeliveryDate: deliveryDate,
+      });
+      toast({
+        title: "Delivery Date Set",
+        description: `Delivery date set to ${formatDate(deliveryDate)}`,
+      });
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Failed to set date",
+        description:
+          error.response?.data?.message || "Failed to set delivery date",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSettingDelivery(false);
+    }
+  };
+
+  const handleMarkAsDelivered = async () => {
+    try {
+      await api.patch(`/admins/orders/${order.id}/delivered`);
+      toast({
+        title: "Order Delivered",
+        description: "Order marked as delivered successfully",
+      });
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Failed",
+        description: "Failed to mark as delivered",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Calculate min date (tomorrow)
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().split("T")[0];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -102,7 +180,7 @@ function AdminOrderDetail() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column - Order Items */}
+        {/* Order Items */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardContent className="p-6">
@@ -147,28 +225,92 @@ function AdminOrderDetail() {
 
           <Card>
             <CardContent className="p-6">
-              <h2 className="mb-3 text-lg font-semibold">Order Details</h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Order ID</span>
-                  <span>{order.id}</span>
+              <h2 className="mb-4 text-lg font-semibold">
+                Delivery Management
+              </h2>
+
+              <div className="mb-6 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">
+                    Estimated Delivery
+                  </span>
+                  {order.estimatedDeliveryDate ? (
+                    <Badge className="bg-green-100 text-green-800">
+                      {formatDate(order.estimatedDeliveryDate)}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-yellow-50">
+                      Not set
+                    </Badge>
+                  )}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Order Code</span>
-                  <span>{order.code}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created</span>
-                  <span>{new Date(order.createdAt).toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Last Updated</span>
-                  <span>{new Date(order.updatedAt).toLocaleDateString()}</span>
-                </div>
+
+                {order.actualDeliveryDate && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">
+                      Actual Delivery
+                    </span>
+                    <Badge className="bg-blue-100 text-blue-800">
+                      {formatDate(order.actualDeliveryDate)}
+                    </Badge>
+                  </div>
+                )}
               </div>
+
+              {(!order.estimatedDeliveryDate || order.status === "PENDING") && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="deliveryDate">
+                      Set Estimated Delivery Date
+                    </Label>
+                    <Input
+                      id="deliveryDate"
+                      type="date"
+                      value={deliveryDate}
+                      onChange={(e) => setDeliveryDate(e.target.value)}
+                      min={minDate}
+                      className="w-full"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      The customer will be notified of this delivery date
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleSetDeliveryDate}
+                    disabled={isSettingDelivery || !deliveryDate}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    {isSettingDelivery ? (
+                      <>
+                        <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                        Setting Date...
+                      </>
+                    ) : (
+                      <>
+                        <Icons.calendar className="mr-2 h-4 w-4" />
+                        Set Delivery Date
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+
+              {order.estimatedDeliveryDate &&
+                !order.actualDeliveryDate &&
+                order.status === "PROCESSING" && (
+                  <div className="mt-4 pt-4 border-t">
+                    <Button
+                      onClick={handleMarkAsDelivered}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Icons.check className="mr-2 h-4 w-4" />
+                      Mark as Delivered Now
+                    </Button>
+                  </div>
+                )}
             </CardContent>
           </Card>
-          {/* Status Update */}
+
           <Card>
             <CardContent className="p-6">
               <h2 className="mb-3 text-lg font-semibold">Update Status</h2>
@@ -195,7 +337,7 @@ function AdminOrderDetail() {
                       Updating...
                     </>
                   ) : (
-                    "Update"
+                    "Update Status"
                   )}
                 </Button>
               </div>
@@ -203,7 +345,6 @@ function AdminOrderDetail() {
           </Card>
         </div>
 
-        {/* Right Column - Summary & Info */}
         <div className="space-y-6">
           {/* Order Summary */}
           <Card>
@@ -232,27 +373,15 @@ function AdminOrderDetail() {
           {/* Customer Info */}
           <Card>
             <CardContent className="p-6">
-              <h2 className="mb-4 text-lg font-semibold">Customer</h2>
+              <h2 className="mb-4 text-lg font-semibold">
+                Customer Information
+              </h2>
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-muted-foreground">Name</p>
                   <p className="font-medium">
                     {order.user.firstName} {order.user.lastName}
                   </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Address</p>
-                  <p className="font-medium">{order.user.address}</p>
-                </div>
-                <div className="flex item-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">City</p>
-                    <p className="font-medium">{order.user.city}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Region</p>
-                    <p className="font-medium">{order.user.region}</p>
-                  </div>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Phone</p>
@@ -264,11 +393,51 @@ function AdminOrderDetail() {
                     <p className="font-medium">{order.user.email}</p>
                   </div>
                 )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Address</p>
+                  <p className="font-medium">{order.user.address}</p>
+                  <p className="text-sm">
+                    {order.user.city}, {order.user.region}
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Order Details */}
+          {/* Order Timeline */}
+          <Card>
+            <CardContent className="p-6">
+              <h2 className="mb-4 text-lg font-semibold">Order Timeline</h2>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Order Placed</span>
+                  <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+                </div>
+                {order.estimatedDeliveryDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Estimated Delivery
+                    </span>
+                    <span>{formatDate(order.estimatedDeliveryDate)}</span>
+                  </div>
+                )}
+                {order.actualDeliveryDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Delivered On</span>
+                    <span>{formatDate(order.actualDeliveryDate)}</span>
+                  </div>
+                )}
+                {order.updatedAt && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Last Updated</span>
+                    <span>
+                      {new Date(order.updatedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -22,7 +22,7 @@ function AdminCategoryList() {
         <h1 className="text-2xl font-semibold">Categories</h1>
 
         <Button asChild>
-          <Link to="/admin/categories/new">Add Category</Link>
+          <Link to="/admins/categories/new">Add Category</Link>
         </Button>
       </div>
 
@@ -82,7 +82,7 @@ const CategoryItem = ({
       <div className="mt-3 flex items-center justify-between">
         <div className="flex gap-2">
           <Button asChild size="sm" variant="outline">
-            <Link to={`/admin/categories/${category.id}`}>View</Link>
+            <Link to={`/admins/categories/${category.id}`}>View</Link>
           </Button>
 
           <Button
