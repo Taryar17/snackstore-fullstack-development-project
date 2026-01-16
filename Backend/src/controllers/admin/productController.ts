@@ -35,7 +35,6 @@ const removeFiles = async (
         originalFile
       );
 
-      // await safeUnlink(originalFilePath);  // Use this For windows error - 'EPERM' or 'EBUSY'
       await unlink(originalFilePath);
     }
 
@@ -48,7 +47,6 @@ const removeFiles = async (
           optimizedFile
         );
 
-        // await safeUnlink(optimizedFilePath);  // Use this For windows error - 'EPERM' or 'EBUSY'
         await unlink(optimizedFilePath);
       }
     }
@@ -84,7 +82,7 @@ export const createProduct = [
 
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const errors = validationResult(req).array({ onlyFirstError: true });
-    // If validation error occurs
+
     if (errors.length > 0) {
       if (req.files && req.files.length > 0) {
         const originalFiles = req.files.map((file: any) => file.filename);
@@ -154,7 +152,7 @@ export const createProduct = [
     await cacheQueue.add(
       "invalidate-product-cache",
       {
-        pattern: "productss:*",
+        pattern: "products:*",
       },
       {
         jobId: `invalidate-${Date.now()}`,

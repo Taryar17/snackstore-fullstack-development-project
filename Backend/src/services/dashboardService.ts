@@ -1,4 +1,5 @@
 import { prisma } from "./prismaClient";
+import { OrderStatus } from "../../generated/prisma/enums";
 
 export const getOrderDetailService = async (id: number) => {
   return await prisma.order.findUnique({
@@ -79,21 +80,18 @@ export const getDashboardStats = async () => {
       },
     }),
 
-    // Order Products (pstatus = "ORDER")
     prisma.product.count({
       where: {
         pstatus: "ORDER",
       },
     }),
 
-    // Preorder Products (pstatus = "PREORDER")
     prisma.product.count({
       where: {
         pstatus: "PREORDER",
       },
     }),
 
-    // Recent Orders (last 5)
     prisma.order.findMany({
       take: 5,
       orderBy: {
@@ -109,7 +107,6 @@ export const getDashboardStats = async () => {
     }),
   ]);
 
-  // Calculate inactive products
   const inactiveProducts = totalProducts - activeProducts;
 
   return {
@@ -135,6 +132,6 @@ export const getDashboardStats = async () => {
 export const updateOrderStatusService = async (id: number, status: string) => {
   return await prisma.order.update({
     where: { id },
-    data: { status },
+    data: { status: status as OrderStatus },
   });
 };

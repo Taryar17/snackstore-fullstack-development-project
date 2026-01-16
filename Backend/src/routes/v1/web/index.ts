@@ -2,6 +2,7 @@ import express from "express";
 import { auth } from "../../../middlewares/auth";
 import { authorise } from "../../../middlewares/authorise";
 import userRoutes from "../api";
+import cartRoutes from "../api/cartRoutes";
 import authRoutes from "./auth";
 import adminRoutes from "../admin";
 import { maintenance } from "../../../middlewares/maintenance";
@@ -16,6 +17,7 @@ router.use(
   adminRoutes
 );
 router.use("/api/v1/users", userRoutes);
+router.use("/api/v1/cart", cartRoutes);
 
 // router.use("/api/v1", maintenance, authRoutes);
 // router.use(

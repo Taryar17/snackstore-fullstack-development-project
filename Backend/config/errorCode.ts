@@ -1,3 +1,5 @@
+import { server } from "websocket";
+
 export const errorCode = {
   invalid: "Error_Invalid",
   unauthenticated: "Error_Unauthenticated",
@@ -12,4 +14,6 @@ export const errorCode = {
   wrongOtp: "Error_WrongOtp",
   unauthorised: "Error_Unauthorised",
   maintenance: "Error_Maintenance",
+  server: "Error_Server",
+  notFound: "Error_NotFound",
 };

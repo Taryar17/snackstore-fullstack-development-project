@@ -10,7 +10,6 @@ import {
   deleteOneReview,
 } from "../../services/reviewService";
 
-/* GET ALL REVIEWS */
 export const getReviews = async (
   req: Request,
   res: Response,
@@ -24,7 +23,6 @@ export const getReviews = async (
   });
 };
 
-/* UPDATE REVIEW STATUS */
 export const changeReviewStatus = [
   body("reviewId", "Review ID is required").isInt({ gt: 0 }),
   body("status", "Invalid status").isIn([
@@ -48,7 +46,6 @@ export const changeReviewStatus = [
   },
 ];
 
-/* DELETE REVIEW */
 export const deleteReview = [
   body("reviewId", "Review ID is required").isInt({ gt: 0 }),
 

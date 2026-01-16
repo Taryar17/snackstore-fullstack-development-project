@@ -52,7 +52,7 @@ export const uploadProfile = async (
   });
 };
 
-//Just for testing
+//testing
 export const getMyPhoto = async (
   req: CustomRequest,
   res: Response,
@@ -62,7 +62,7 @@ export const getMyPhoto = async (
     __dirname,
     "../../../",
     "uploads/images",
-    "1755280127672=415852824-coding_crocodile.jpg" // user.image
+    "1755280127672=415852824-coding_crocodile.jpg"
   );
 
   res.sendFile(file, (err) => res.status(404).send("File not found"));
@@ -244,6 +244,7 @@ export const getUserOrders = async (
       status: order.status,
       totalPrice: Number(order.totalPrice),
       createdAt: order.createdAt,
+      estimatedDeliveryDate: order.estDeliveryDate,
       itemsCount: order.products.reduce((sum, item) => sum + item.quantity, 0),
       items: order.products.map((item) => ({
         name: item.product.name,
@@ -345,6 +346,7 @@ export const getOrderDetail = async (
         totalPrice: Number(order.totalPrice),
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
+        estimatedDeliveryDate: order.estDeliveryDate,
         products: order.products.map((item) => ({
           id: item.id,
           product: {

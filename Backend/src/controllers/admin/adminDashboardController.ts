@@ -23,6 +23,9 @@ export const getDashboardStats = async (
       totalOrders,
       totalUsers,
       recentOrders,
+      ordersNeedingDeliveryDate,
+      upcomingDeliveries,
+      todaysDeliveries,
     ] = await Promise.all([
       prisma.product.count(),
       prisma.category.count(),
@@ -56,6 +59,30 @@ export const getDashboardStats = async (
                 },
               },
             },
+          },
+        },
+      }),
+      prisma.order.count({
+        where: {
+          OR: [
+            { estDeliveryDate: null },
+            { estDeliveryDate: { equals: null } },
+          ],
+        },
+      }),
+      prisma.order.count({
+        where: {
+          estDeliveryDate: {
+            gte: new Date(),
+            lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          },
+        },
+      }),
+      prisma.order.count({
+        where: {
+          estDeliveryDate: {
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            lt: new Date(new Date().setHours(23, 59, 59, 999)),
           },
         },
       }),
@@ -103,6 +130,9 @@ export const getDashboardStats = async (
         totalUsers,
         totalRevenue: Number(totalRevenue),
         todayOrders,
+        ordersNeedingDeliveryDate,
+        upcomingDeliveries,
+        todaysDeliveries,
         orderStatusStats,
         productStatusStats,
       },
@@ -116,6 +146,7 @@ export const getDashboardStats = async (
         total: Number(order.totalPrice),
         createdAt: order.createdAt,
         itemsCount: order.products.length,
+        estimatedDeliveryDate: order.estDeliveryDate,
       })),
     });
   } catch (error) {
@@ -317,3 +348,150 @@ export const updateOrderStatus = [
     }
   },
 ];
+
+export const setDeliveryDate = [
+  body("estimatedDeliveryDate")
+    .notEmpty()
+    .withMessage("Delivery date is required"),
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return next(createError(errors.array()[0].msg, 400, errorCode.invalid));
+    }
+
+    const orderId = parseInt(req.params.orderId);
+    const { estimatedDeliveryDate } = req.body;
+
+    if (isNaN(orderId)) {
+      return next(createError("Invalid order ID", 400, errorCode.invalid));
+    }
+
+    try {
+      // Verify order exists
+      const order = await prisma.order.findUnique({
+        where: { id: orderId },
+      });
+
+      if (!order) {
+        return next(createError("Order not found", 404, errorCode.notFound));
+      }
+
+      // Parse and validate date
+      const deliveryDate = new Date(estimatedDeliveryDate);
+      if (isNaN(deliveryDate.getTime())) {
+        return next(createError("Invalid date format", 400, errorCode.invalid));
+      }
+
+      // Ensure date is in the future
+      if (deliveryDate < new Date()) {
+        return next(
+          createError(
+            "Delivery date must be in the future",
+            400,
+            errorCode.invalid
+          )
+        );
+      }
+
+      // Update order with delivery date
+      const updatedOrder = await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          estDeliveryDate: deliveryDate,
+          status: "PROCESSING",
+        },
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              phone: true,
+              email: true,
+            },
+          },
+        },
+      });
+
+      res.status(200).json({
+        message: "Delivery date set successfully",
+        order: {
+          id: updatedOrder.id,
+          code: updatedOrder.code,
+          estimatedDeliveryDate: updatedOrder.estDeliveryDate,
+          status: updatedOrder.status,
+          customerName: `${updatedOrder.user.firstName || ""} ${
+            updatedOrder.user.lastName || ""
+          }`.trim(),
+          customerPhone: updatedOrder.user.phone,
+        },
+      });
+    } catch (error) {
+      console.error("Set delivery date error:", error);
+      return next(
+        createError("Failed to set delivery date", 500, errorCode.server)
+      );
+    }
+  },
+];
+
+export const getOrdersNeedingDeliveryDate = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        status: "PENDING",
+        estDeliveryDate: null,
+      },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            phone: true,
+          },
+        },
+        products: {
+          include: {
+            product: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 10,
+    });
+
+    const formattedOrders = orders.map((order) => ({
+      id: order.id,
+      code: order.code,
+      customerName: order.user.firstName
+        ? `${order.user.firstName} ${order.user.lastName || ""}`.trim()
+        : order.user.phone,
+      phone: order.user.phone,
+      total: Number(order.totalPrice),
+      createdAt: order.createdAt,
+      itemsCount: order.products.length,
+      itemNames: order.products
+        .map((item) => item.product.name)
+        .slice(0, 2)
+        .join(", "),
+    }));
+
+    res.status(200).json({
+      message: "Orders needing delivery date",
+      orders: formattedOrders,
+      count: orders.length,
+    });
+  } catch (error) {
+    console.error("Get orders needing delivery date error:", error);
+    return next(createError("Failed to get orders", 500, errorCode.server));
+  }
+};

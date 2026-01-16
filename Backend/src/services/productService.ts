@@ -1,3 +1,4 @@
+import { stockWSS } from "..";
 import { prisma } from "./prismaClient";
 
 export const createOneProduct = async (data: any) => {
@@ -120,28 +121,30 @@ export const updateOneProduct = async (productId: number, data: any) => {
       create: data.images,
     };
   }
-
-  return prisma.product.update({
+  const updatedProduct = await prisma.product.update({
     where: { id: productId },
     data: productdata,
   });
+
+  if (stockWSS) {
+    await stockWSS.broadcastStockUpdate(productId);
+  }
+
+  return updatedProduct;
 };
 
 export const deleteOneProduct = async (id: number) => {
+  if (stockWSS) {
+    await stockWSS.broadcastStockUpdate(id);
+  }
   return prisma.product.delete({
     where: { id },
   });
 };
 
 export const getProductWithRelations = async (id: number, userId: number) => {
-  return prisma.product.findUnique({
+  const product = await prisma.product.findUnique({
     where: { id },
-    omit: {
-      categoryId: true,
-      typeId: true,
-      createdAt: true,
-      updatedAt: true,
-    },
     include: {
       images: {
         select: {
@@ -159,9 +162,52 @@ export const getProductWithRelations = async (id: number, userId: number) => {
       },
     },
   });
+
+  if (!product) {
+    return null;
+  }
+
+  // Get user's reserved quantity from cart
+  const userCartItems = await prisma.cartItem.findMany({
+    where: {
+      productId: id,
+      session: {
+        userId: userId,
+        status: "ACTIVE",
+        expiresAt: { gt: new Date() },
+      },
+    },
+    select: {
+      quantity: true,
+    },
+  });
+
+  const userReserved = userCartItems.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
+  const available = Math.max(0, product.inventory - product.reserved);
+
+  return {
+    ...product,
+    available,
+    userReserved,
+  };
 };
+
 export const getProductsList = async (options: any) => {
-  return prisma.product.findMany(options);
+  const products = await prisma.product.findMany({
+    ...options,
+    select: {
+      ...options.select,
+      reserved: true,
+    },
+  });
+
+  return products.map((product) => ({
+    ...product,
+    available: product.inventory - product.reserved,
+  }));
 };
 
 export const getCategoryList = async () => {
@@ -170,4 +216,27 @@ export const getCategoryList = async () => {
 
 export const getTypeList = async () => {
   return prisma.type.findMany();
+};
+
+export const getProductWithAvailableStock = async (productId: number) => {
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: {
+      id: true,
+      name: true,
+      price: true,
+      inventory: true,
+      reserved: true,
+      status: true,
+    },
+  });
+
+  if (product) {
+    return {
+      ...product,
+      available: product.inventory - product.reserved,
+    };
+  }
+
+  return null;
 };

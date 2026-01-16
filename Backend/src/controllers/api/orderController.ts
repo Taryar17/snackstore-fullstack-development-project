@@ -5,6 +5,8 @@ import { prisma } from "../../lib/prisma";
 import { createError } from "../../utils/error";
 import { errorCode } from "../../config/errorCode";
 import { Prisma } from "../../../generated/prisma/client";
+import cacheQueue from "../../jobs/queues/cacheQueue";
+import { redis } from "../../config/redisClient";
 
 interface CustomRequest extends Request {
   userId?: number;
@@ -39,10 +41,16 @@ export const createOrder = async (
     }
 
     // Get cart items from request body
-    const { items, totalPrice } = req.body;
+    const { items, totalPrice, cartSessionId } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return next(createError("Cart is empty", 400, errorCode.invalid));
+    }
+
+    if (!cartSessionId) {
+      return next(
+        createError("Cart session ID required", 400, errorCode.invalid)
+      );
     }
 
     // Generate order code
@@ -52,6 +60,24 @@ export const createOrder = async (
     // Start transaction
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create the order
+      const cartSession = await tx.cartSession.findFirst({
+        where: {
+          id: cartSessionId,
+          userId: userId,
+          status: "ACTIVE",
+        },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      });
+
+      if (!cartSession) {
+        throw new Error("Active cart session not found");
+      }
       const order = await tx.order.create({
         data: {
           userId,
@@ -61,17 +87,23 @@ export const createOrder = async (
         },
       });
 
-      // 2. Create order items
+      // Create order items
       const orderProducts = await Promise.all(
         items.map(async (item: any) => {
           // Check product availability
           const product = await tx.product.findUnique({
             where: { id: item.productId },
-            select: { inventory: true, price: true },
           });
 
           if (!product) {
             throw new Error(`Product ${item.productId} not found`);
+          }
+
+          const cartItem = cartSession.items.find(
+            (i) => i.productId === item.productId
+          );
+          if (!cartItem || cartItem.quantity !== item.quantity) {
+            throw new Error(`Cart item mismatch for product ${item.productId}`);
           }
 
           if (product.inventory < item.quantity) {
@@ -87,9 +119,12 @@ export const createOrder = async (
               inventory: {
                 decrement: item.quantity,
               },
+              // Release the reserved quantity
+              reserved: {
+                decrement: item.quantity,
+              },
             },
           });
-
           return tx.productsOnOrder.create({
             data: {
               orderId: order.id,
@@ -100,14 +135,110 @@ export const createOrder = async (
           });
         })
       );
+      await tx.cartSession.update({
+        where: { id: cartSessionId },
+        data: {
+          status: "CONVERTED",
+          expiresAt: new Date(),
+        },
+      });
 
-      return { order, orderProducts };
+      await tx.cartItem.deleteMany({
+        where: { sessionId: cartSessionId },
+      });
+
+      return {
+        order,
+        orderProducts,
+        productIds: items.map((item: any) => item.productId), // Return product IDs
+      };
     });
+    try {
+      // Invalidate cache for each ordered product
+      await Promise.all(
+        items.map(async (item: any) => {
+          const productId = item.productId;
+
+          await cacheQueue.add(
+            "invalidate-product-cache",
+            {
+              pattern: `products:${productId}`,
+            },
+            {
+              jobId: `invalidate-product-${productId}-${Date.now()}`,
+              priority: 1,
+            }
+          );
+
+          console.log(`Cache invalidation queued for product ${productId}`);
+        })
+      );
+
+      await cacheQueue.add(
+        "invalidate-product-cache",
+        {
+          pattern: "products:*",
+        },
+        {
+          jobId: `invalidate-all-products-${Date.now()}`,
+          priority: 2,
+        }
+      );
+
+      console.log("Product cache invalidation queued successfully");
+    } catch (cacheError) {
+      console.error("Cache invalidation failed:", cacheError);
+    }
+
+    try {
+      // Invalidate cache for each ordered product
+      await Promise.all(
+        items.map(async (item: any) => {
+          const productId = item.productId;
+
+          // Queue for async processing
+          await cacheQueue.add(
+            "invalidate-product-cache",
+            {
+              pattern: `products:${productId}`,
+            },
+            {
+              jobId: `invalidate-product-${productId}-${Date.now()}`,
+              priority: 1,
+            }
+          );
+        })
+      );
+
+      await cacheQueue.add(
+        "invalidate-product-cache",
+        {
+          pattern: "products:*",
+        },
+        {
+          jobId: `invalidate-all-products-${Date.now()}`,
+          priority: 2,
+        }
+      );
+
+      const allProductKeys = await redis.keys("products:*");
+      if (allProductKeys.length > 0) {
+        await redis.del(...allProductKeys);
+        console.log(
+          `Immediately deleted ${allProductKeys.length} product cache keys`
+        );
+      }
+    } catch (cacheError) {
+      console.error("Cache invalidation failed:", cacheError);
+    }
 
     res.status(201).json({
       message: "Order created successfully",
       orderId: result.order.id,
       orderCode: result.order.code,
+      cartCleared: true,
+      estimatedDeliveryDate: null,
+      note: "Delivery date will be confirmed by admin",
     });
   } catch (error: any) {
     console.error("Order creation error:", error);

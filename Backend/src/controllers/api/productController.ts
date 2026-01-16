@@ -10,6 +10,7 @@ import { getOrSetCache } from "../../utils/cache";
 import {
   getCategoryList,
   getProductsList,
+  getProductWithAvailableStock,
   getProductWithRelations,
   getTypeList,
 } from "../../services/productService";
@@ -19,6 +20,7 @@ import {
   removeProductFromFavourite,
 } from "../../services/userService";
 import { pStatus } from "../../../generated/prisma/enums";
+import { prisma } from "../../services/prismaClient";
 
 interface CustomRequest extends Request {
   userId?: number;
@@ -28,24 +30,83 @@ export const getProduct = [
   param("id", "Product ID is required.").isInt({ gt: 0 }),
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const errors = validationResult(req).array({ onlyFirstError: true });
-    // If validation error occurs
+
     if (errors.length > 0) {
       return next(createError(errors[0].msg, 400, errorCode.invalid));
     }
 
     const productId = req.params.id;
     const userId = req.userId;
-    const user = await getUserbyId(userId!);
-    checkUserIfNotExist(user);
 
-    const cacheKey = `products:${JSON.stringify(productId)}`;
-    const product = await getOrSetCache(cacheKey, async () => {
-      return await getProductWithRelations(+productId, user!.id);
-    });
+    try {
+      const product = await prisma.product.findUnique({
+        where: { id: +productId },
+        include: {
+          images: {
+            select: {
+              id: true,
+              path: true,
+            },
+          },
+        },
+      });
 
-    checkModelIfExist(product);
+      if (!product) {
+        return next(createError("Product not found", 404, errorCode.notFound));
+      }
 
-    res.status(200).json({ message: "Product Detail", product });
+      // Get user's reserved quantity
+      let userReserved = 0;
+      if (userId) {
+        const userCartItems = await prisma.cartItem.findMany({
+          where: {
+            productId: +productId,
+            session: {
+              userId: userId,
+              status: "ACTIVE",
+              expiresAt: { gt: new Date() },
+            },
+          },
+          select: {
+            quantity: true,
+          },
+        });
+
+        userReserved = userCartItems.reduce(
+          (sum, item) => sum + item.quantity,
+          0
+        );
+      }
+
+      const available = Math.max(0, product.inventory - product.reserved);
+
+      const response = {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        discount: product.discount,
+        rating: product.rating,
+        status: product.status,
+        pstatus: product.pstatus,
+        images: product.images,
+        inventory: product.inventory,
+        reserved: product.reserved,
+        available,
+        userReserved,
+        canBuy: product.status === "ACTIVE" && available > 0,
+      };
+
+      res.status(200).json({
+        message: "Product Detail",
+        product: response,
+      });
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      return next(
+        createError("Failed to fetch product", 500, errorCode.server)
+      );
+    }
   },
 ];
 export const getProductsByPagination = [
@@ -93,7 +154,7 @@ export const getProductsByPagination = [
 
     const where = {
       AND: [
-        pstatus ? { pstatus } : {},
+        { pstatus: "ORDER" },
         categoryList.length > 0 ? { categoryId: { in: categoryList } } : {},
         typeList.length > 0 ? { typeId: { in: typeList } } : {},
       ],
@@ -311,5 +372,113 @@ export const toggleFavourite = [
         ? "Successfully added favourite"
         : "Successfully removed favourite",
     });
+  },
+];
+
+export const checkStockAvailability = [
+  param("id", "Product ID is required.").isInt({ gt: 0 }),
+  query("quantity", "Quantity is required.").isInt({ gt: 0 }),
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const errors = validationResult(req).array({ onlyFirstError: true });
+    if (errors.length > 0) {
+      return next(createError(errors[0].msg, 400, errorCode.invalid));
+    }
+
+    const productId = parseInt(req.params.id);
+    const quantity = parseInt(req.query.quantity as string);
+
+    try {
+      const product = await getProductWithAvailableStock(productId);
+
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      const available = product.inventory - product.reserved;
+      const isAvailable = available >= quantity;
+
+      res.status(200).json({
+        isAvailable,
+        available,
+        requested: quantity,
+        product: {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+        },
+      });
+    } catch (error) {
+      console.error("Error checking stock:", error);
+      res.status(500).json({ error: "Failed to check stock availability" });
+    }
+  },
+];
+
+export const getProductStock = [
+  param("id", "Product ID is required.").isInt({ gt: 0 }),
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const errors = validationResult(req).array({ onlyFirstError: true });
+    if (errors.length > 0) {
+      return next(createError(errors[0].msg, 400, errorCode.invalid));
+    }
+
+    const productId = parseInt(req.params.id);
+    const userId = req.userId;
+
+    try {
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+        select: {
+          id: true,
+          inventory: true,
+          reserved: true,
+          status: true,
+        },
+      });
+
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      // Get user's reserved quantity
+      let userReserved = 0;
+      if (userId) {
+        const userCartItems = await prisma.cartItem.findMany({
+          where: {
+            productId: productId,
+            session: {
+              userId: userId,
+              status: "ACTIVE",
+              expiresAt: { gt: new Date() },
+            },
+          },
+          select: {
+            quantity: true,
+          },
+        });
+
+        userReserved = userCartItems.reduce(
+          (sum, item) => sum + item.quantity,
+          0
+        );
+      }
+
+      const available = product.inventory - product.reserved;
+      const availableForUser = Math.max(0, available - userReserved);
+
+      res.status(200).json({
+        id: product.id,
+        inventory: product.inventory,
+        reserved: product.reserved,
+        available: available,
+        availableForUser: availableForUser,
+        userReserved: userReserved,
+        status: product.status,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error fetching stock:", error);
+      res.status(500).json({ error: "Failed to fetch stock" });
+    }
   },
 ];

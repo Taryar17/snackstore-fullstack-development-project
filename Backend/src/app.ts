@@ -10,10 +10,11 @@ import routes from "./routes/v1/web";
 import cookieParser from "cookie-parser";
 import i18next from "i18next";
 import middleware from "i18next-http-middleware";
+import { setupCartCleanupCron } from "./cron/cartCleanup";
 
 export const app = express();
 
-var whiteList = ["http://localhost:5173"];
+var whiteList = ["http://localhost:5173", "ws://localhost:8080"];
 var corsOptions = {
   origin: function (
     origin: any,
@@ -29,6 +30,7 @@ var corsOptions = {
   credentials: true,
 };
 
+setupCartCleanupCron();
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

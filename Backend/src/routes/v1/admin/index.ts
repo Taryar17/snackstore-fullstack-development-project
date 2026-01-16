@@ -37,6 +37,8 @@ import {
   getDashboardStats,
   getDetailedStats,
   getOrderDetail,
+  getOrdersNeedingDeliveryDate,
+  setDeliveryDate,
   updateOrderStatus,
 } from "../../../controllers/admin/adminDashboardController";
 
@@ -72,8 +74,10 @@ router.delete("/types/:typeId", removeType);
 
 router.get("/dashboard/stats", getDashboardStats);
 router.get("/dashboard/stats/detailed", getDetailedStats);
+router.get("/dashboard/orders-needing-delivery", getOrdersNeedingDeliveryDate);
 
 router.get("/orders/:orderId", getOrderDetail);
 router.put("/orders/:orderId/status", updateOrderStatus);
+router.patch("/orders/:orderId/delivery-date", setDeliveryDate);
 
 export default router;

@@ -1,10 +1,15 @@
+// src/index.ts - Modified to include WebSocket
 import "dotenv/config";
+import { createServer } from "http";
 import { app } from "./app";
-require("dotenv").config();
+import { wsSocketServer } from "./websocket/wsStockServer";
 
 const APP_PORT = process.env.APP_PORT || 4000;
 
-app.listen(APP_PORT, () => {
-  console.log(`Server is running on port ${APP_PORT}`);
-  console.log(`ENV PORT:`, process.env.APP_PORT);
+const server = createServer(app);
+
+export const stockWSS = new wsSocketServer(server);
+
+server.listen(APP_PORT, () => {
+  console.log(`HTTP + WebSocket server running on port ${APP_PORT}`);
 });
